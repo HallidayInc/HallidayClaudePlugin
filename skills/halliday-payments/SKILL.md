@@ -1,5 +1,5 @@
 ---
-name: halliday-payments
+name: halliday
 description: |
   Halliday Payments SDK and API integration for crypto applications. 
   Use this skill when the developer mentions: crypto deposits, crypto payments, 
