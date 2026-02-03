@@ -1,0 +1,12 @@
+{
+  "name": "halliday-payments",
+  "version": "1.0.0",
+  "description": "Halliday Payments integration for crypto deposits, fiat-to-crypto onramps, and cross-chain swaps.",
+  "author": {
+    "name": "Halliday Inc.",
+    "email": "support@halliday.xyz"
+  },
+  "homepage": "https://docs.halliday.xyz",
+  "repository": "https://github.com/HallidayInc/HallidayClaudePlugin",
+  "category": "development"
+}
