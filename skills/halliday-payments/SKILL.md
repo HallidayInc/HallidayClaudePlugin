@@ -1,9 +1,9 @@
 ---
 name: halliday
 description: |
-  Halliday Payments SDK and API integration for crypto applications. 
-  Use this skill when the developer mentions: crypto deposits, crypto payments, 
-  fiat-to-crypto, onramp, onramping, cross-chain swaps, crypto swaps, buying crypto, 
+  Halliday Payments SDK and API integration for crypto applications.
+  Use this skill when the developer mentions: crypto deposits, crypto payments,
+  fiat-to-crypto, onramp, onramping, cross-chain swaps, crypto swaps, buying crypto,
   depositing crypto, payment widget, crypto widget, blockchain deposits,
   perp dex deposits, CEX to L2, centralized exchange deposits, centralized exchange payments,
   web3 deposits, onchain payments, onchain deposits.
@@ -28,13 +28,49 @@ Activate this knowledge when the developer is working on:
 - Deposits from centralized exchanges to L1s, L2s, or app-chains
 - Any payment or deposit widget for web3 applications
 
+## Getting Started
+
+To integrate Halliday Payments, developers need an API key.
+
+**How to get API keys:** Contact the Halliday team at partnerships@halliday.xyz
+
+**Sandbox/Testing:** Reach out to the Halliday team for information about sandbox environment testing.
+
 ## Integration Approaches
 
 ### 1. SDK Widget (Recommended)
 A drop-in UI component that handles the entire user experience. Best for most web applications and React Native mobile apps.
 
+#### Widget Customization
+The SDK widget supports custom styling (colors, branding). See configuration options at:
+https://docs.halliday.xyz/pages/payments-sdk-docs#customizing-styles
+
 ### 2. Custom UI via API
 For developers who need full control over the interface, or for native mobile apps (Swift/Kotlin).
+
+### Mobile Integration
+- The SDK widget works in mobile browsers and WebViews
+- **Important:** Payment provider screens (e.g., Stripe/Moonpay card input) require opening a standard secure mobile browser—plain WebViews lack the necessary security features for payment processing
+
+## Compliance & Requirements
+
+### Fiat Onramp Providers
+Halliday implements multiple fiat-onramp providers including Stripe, Moonpay, Unlimit, Transak, and CEXs.
+
+### KYC
+- **Fiat onramps:** KYC is required and handled entirely by the onramp providers
+- **Coinbase onramp:** Allows no-KYC fiat onramping up to $500 USD
+- **Crypto-to-crypto swaps:** No KYC required
+
+### Geographic Restrictions
+- **Fiat onramps:** Restrictions vary by provider and change frequently
+- **Crypto-to-crypto swaps:** No geographic restrictions
+
+### Supported Fiat Currencies
+USD and EUR for onramping.
+
+### Transaction Limits
+Min/max limits for onramps vary depending on the provider.
 
 ## Primary Documentation Sources
 
@@ -113,8 +149,17 @@ When developers ask about:
 - **"How do I add crypto payments?"** → Recommend SDK Widget, fetch HallidayPaymentsSdkExamples
 - **"How do I build a custom deposit UI?"** → Recommend using the SDK widget and detail that the API approach enables custom UI creation, fetch relevant API example repo
 - **"What wallets are supported?"** → Fetch docs, works with any EVM wallet (Dynamic, Privy, RainbowKit, etc.). Additional wallet support is added frequently.
-- **"How do I handle webhooks?"** → Fetch API spec from llms-info page
-- **"Mobile app integration?"** → Recommend using React Native with the SDK widget but for native mobile app builds, the API approach is best, fetch OpenAPI spec
+- **"How do I handle webhooks?"** → Webhook functionality is coming soon. For now, use polling or the SDK's built-in state management.
+- **"Mobile app integration?"** → Recommend using React Native with the SDK widget. For native mobile app builds (Swift/Kotlin), the API approach is best. Note: payment provider screens require opening a secure mobile browser, not a plain WebView.
 - **"Which chains are supported?"** → Use the API for the latest chain support using an API key in the tool in the documentation at https://docs.halliday.xyz/api-reference/chains/get-supported-chains
 - **"Which assets are supported?"** → Use the API for the latest asset support using an API key in the tool in the documentation at https://docs.halliday.xyz/api-reference/assets/get-asset-details
-```
+- **"How do I get an API key?"** → Contact partnerships@halliday.xyz
+- **"Is there a test/sandbox environment?"** → Reach out to the Halliday team for information about sandbox environment testing.
+- **"Is KYC required?"** → KYC is required for fiat onramps only (handled by providers). Coinbase allows no-KYC up to $500 USD. No KYC for crypto-to-crypto swaps.
+- **"What fiat currencies are supported?"** → USD and EUR for onramping.
+
+## Support
+
+- **General support:** support@halliday.xyz
+- **Partnerships & API keys:** partnerships@halliday.xyz
+- **Contact form:** https://halliday.xyz/contact
