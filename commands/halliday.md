@@ -17,6 +17,10 @@ web_fetch https://docs.halliday.xyz/llms-full.txt
 
 This contains all integration guides, code examples, and API details needed to help the developer.
 
+## Try It Now
+
+Users can experience the Halliday widget immediately by visiting https://halliday.xyz/ and clicking "Try it now" on the home page.
+
 ## Getting Started
 
 To integrate Halliday Payments, developers need an API key.

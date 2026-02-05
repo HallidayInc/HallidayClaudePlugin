@@ -19,6 +19,10 @@ web_fetch https://docs.halliday.xyz/llms-full.txt
 
 Halliday Payments is an all-in-one suite, built on the workflow protocol, that enables developers to implement simplified fiat-to-crypto onramps, cross-chain swaps, and crypto deposits on any blockchain using just a few lines of code.
 
+## Try It Now
+
+Users can experience the Halliday widget immediately by visiting https://halliday.xyz/ and clicking "Try it now" on the home page.
+
 ## When to Use This Skill
 
 Activate this knowledge when the developer is working on:
