@@ -10,7 +10,7 @@ A Claude Code plugin that gives Claude the context it needs to help developers i
 
 ## Install
 
-Add the Halliday marketplace and install the plugin:
+After installing Claude Code on the command line, add the Halliday marketplace and install the plugin:
 
 ```bash
 claude plugin marketplace add HallidayInc/HallidayClaudePlugin
