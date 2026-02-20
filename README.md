@@ -13,8 +13,7 @@ A Claude Code plugin that gives Claude the context it needs to help developers i
 After installing Claude Code on the command line, add the Halliday marketplace and install the plugin:
 
 ```bash
-claude plugin marketplace add HallidayInc/HallidayClaudePlugin
-claude plugin install halliday-payments@halliday
+claude plugin marketplace add HallidayInc/HallidayClaudePlugin && claude plugin install halliday-payments@halliday
 ```
 
 ## Usage
