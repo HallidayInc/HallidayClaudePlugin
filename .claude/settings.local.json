@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(wc:*)",
+      "WebFetch(domain:docs.halliday.xyz)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "WebFetch(domain:raw.githubusercontent.com)"
+    ]
+  }
+}

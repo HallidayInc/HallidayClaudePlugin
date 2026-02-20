@@ -1,21 +1,22 @@
 ---
 name: halliday
 description: Start a Halliday Payments integration — fiat-to-crypto onramps, cross-chain swaps, and crypto deposits
+disable-model-invocation: true
 ---
 
 # Halliday Payments
 
-**Halliday Payments enables developers to integrate streamlined crypto deposits, fiat-to-crypto onramps, and cross-chain swaps into their apps.**
+Halliday Payments enables developers to add crypto deposits, fiat-to-crypto onramps, and cross-chain swaps to their apps.
 
 ## Initialization
 
-**IMPORTANT: Do NOT fetch documentation yet.** First, ask the user what they would like to do using the AskUserQuestion tool with these exact options:
+Ask the user what they would like to do using the AskUserQuestion tool:
 
 **Question:** "How would you like to get started with Halliday?"
 
 **Options:**
-1. **Ask questions and learn about Halliday** - Learn about Halliday's features, integration approaches, and get help with implementation
-2. **Clone and run a sample application** - Get started quickly by cloning one of our open source example apps
+1. **Ask questions and learn about Halliday** — Learn about features, integration approaches, and get implementation help
+2. **Clone and run a sample application** — Get started quickly with an open source example app
 
 ---
 
@@ -23,16 +24,20 @@ description: Start a Halliday Payments integration — fiat-to-crypto onramps, c
 
 If the user selects "Ask questions and learn about Halliday":
 
-1. **Immediately tell the user:** "I'm loading the Halliday documentation. Go ahead and type your question - I'll answer it as soon as the docs are ready."
+1. Tell the user: "Go ahead and ask your question — I have Halliday's integration reference loaded and ready."
 
-2. **Fetch the full documentation in the background while waiting for user input:**
-   ```
-   web_fetch https://docs.halliday.xyz/llms-full.txt
-   ```
+2. Answer their questions using the reference files in this plugin:
+   - SDK widget questions → Read [reference/sdk-widget-integration.md](../skills/halliday-payments/reference/sdk-widget-integration.md)
+   - API/custom UI questions → Read [reference/api-integration.md](../skills/halliday-payments/reference/api-integration.md)
+   - Compliance questions → Read [reference/compliance-and-requirements.md](../skills/halliday-payments/reference/compliance-and-requirements.md)
+   - "Which example should I use?" → Read [reference/example-repositories.md](../skills/halliday-payments/reference/example-repositories.md)
+   - General questions → Read [reference/common-questions.md](../skills/halliday-payments/reference/common-questions.md)
 
-3. **Answer their questions** using the fetched documentation. Do NOT ask them a series of guided questions - let them drive the conversation and ask whatever they want to know about Halliday.
+3. Let the user drive the conversation. Do not ask a series of guided questions — answer what they ask.
 
-**CRITICAL: When providing code examples, you MUST use the EXACT code snippets from the fetched documentation. Do NOT generate, modify, or hallucinate code examples. Copy the code verbatim from the docs.** If the documentation doesn't contain a code example for what the user is asking, say so and point them to the relevant documentation section or example repository instead of making up code.
+4. **Only fetch external docs as a fallback.** If the reference files don't contain enough detail for their specific question, fetch https://docs.halliday.xyz/llms-full.txt. For API schema details, fetch https://docs.halliday.xyz/pages/llms-info.
+
+**CRITICAL: When providing code examples, use ONLY code from official documentation or example repositories. Never fabricate code. Never guess parameter names or values.** If the docs don't contain a code example for what the user needs, say so and point them to the closest example repository.
 
 ---
 
@@ -40,92 +45,90 @@ If the user selects "Ask questions and learn about Halliday":
 
 If the user selects "Clone and run a sample application":
 
-### Step 1: Ask SDK Widget vs Custom UI via API
+Copy this checklist and track progress as you complete each step:
 
-**First, ask the user** using the AskUserQuestion tool:
+```
+Setup Progress:
+- [ ] Step 1: Choose integration approach (SDK Widget or Custom UI via API)
+- [ ] Step 2: Choose example application
+- [ ] Step 3: Clone repository
+- [ ] Step 4: Configure API keys
+- [ ] Step 5: Install dependencies
+- [ ] Step 6: Start development server
+- [ ] Step 7: Verify application runs
+```
+
+### Step 1: Choose Integration Approach
+
+Ask the user using AskUserQuestion:
 
 **Question:** "Which type of integration would you like to try?"
 
 **Options:**
-1. **SDK Widget (Recommended)** - Drop-in UI component that handles the entire payment flow. Fastest to integrate.
-2. **Custom UI via API** - Build your own interface with full control. Requires more code but offers complete customization.
+1. **SDK Widget (Recommended)** — Drop-in UI component that handles the entire payment flow
+2. **Custom UI via API** — Build your own interface with full control over the design
 
-### Step 2: Show Specific Sample Apps
+### Step 2: Choose Example Application
 
-**If they chose SDK Widget**, ask using AskUserQuestion:
+**If SDK Widget**, ask using AskUserQuestion:
 
 **Question:** "Which SDK Widget example would you like to clone?"
 
 **Options:**
-1. **Vanilla HTML/CSS/JS** - Simple project without frameworks (Repository: `HallidayPaymentsSdkExamples`)
-2. **React + Dynamic + Ethers** - React with Dynamic wallet and Ethers.js (Repository: `HallidaySdkDynamicEthers`)
-3. **React + Dynamic + Wagmi** - React with Dynamic wallet and Wagmi (Repository: `HallidaySdkDynamicWagmi`)
-4. **React + Privy + Vite** - React with Privy wallet (Repository: `HallidaySdkPrivyReactExample`)
+1. **Vanilla HTML/CSS/JS** — No framework (Repository: `HallidayPaymentsSdkExamples`)
+2. **React + Dynamic + Ethers** — React with Dynamic wallet and Ethers.js (Repository: `HallidaySdkDynamicEthers`)
+3. **React + Dynamic + Wagmi** — React with Dynamic wallet and Wagmi (Repository: `HallidaySdkDynamicWagmi`)
+4. **React + Privy + Vite** — React with Privy wallet (Repository: `HallidaySdkPrivyReactExample`)
 
-**If they chose Custom UI via API**, ask using AskUserQuestion:
+**If Custom UI via API**, ask using AskUserQuestion:
 
 **Question:** "Which API example would you like to clone?"
 
 **Options:**
-1. **Vanilla HTML/CSS/JS + API** - Custom UI in vanilla JS (Repository: `HallidayPaymentsApiExamples`)
-2. **React + API** - Custom UI in React (Repository: `HallidayPaymentsApiExamplesReact`)
-3. **React + Dynamic + Wagmi + API** - React + Dynamic with custom UI (Repository: `HallidayApiDynamicExamplesWagmi`)
-4. **React + Privy + Vite + API** - React + Privy with custom UI (Repository: `HallidayApiPrivyReactExamples`)
+1. **Vanilla HTML/CSS/JS + API** — Custom UI in vanilla JS (Repository: `HallidayPaymentsApiExamples`)
+2. **React + API** — Custom UI in React (Repository: `HallidayPaymentsApiExamplesReact`)
+3. **React + Dynamic + Wagmi + API** — React + Dynamic with custom UI (Repository: `HallidayApiDynamicExamplesWagmi`)
+4. **React + Privy + Vite + API** — React + Privy with custom UI (Repository: `HallidayApiPrivyReactExamples`)
 
 ### Step 3: Clone the Repository
-
-Once the user selects a sample application, clone it to the current directory:
 
 ```bash
 git clone https://github.com/HallidayInc/{REPOSITORY_NAME}.git
 ```
 
-### Step 4: Configure API Keys (REQUIRED BEFORE RUNNING)
+**Verify:** Confirm the directory was created and contains a README.md.
 
-**IMPORTANT: Before running the application, you MUST help the user set up their API keys.**
+### Step 4: Configure API Keys
 
-1. **Read the README.md** file in the cloned repository to understand the setup requirements
-2. **Identify ALL locations** where API keys need to be inserted (look for placeholders like `YOUR_API_KEY`, `HALLIDAY_API_KEY`, environment variables in `.env.example`, etc.)
-3. **Ask the user for their API keys:**
-   - Halliday API key (required) - Get one at partnerships@halliday.xyz
-   - Any wallet provider API keys (Dynamic, Privy, etc.) if applicable
-4. **Insert the API keys** into all required locations in the code (config files, .env files, source files)
-5. **Verify all keys are set** before proceeding to run the app
+1. Read the `README.md` in the cloned repository for setup requirements
+2. Identify all locations where API keys need to be set:
+   - Look for `.env.example` files (copy to `.env`)
+   - Search for placeholders: `YOUR_API_KEY`, `HALLIDAY_API_KEY`, `NEXT_PUBLIC_HALLIDAY_API_KEY`, etc.
+   - Check config files and source files for any other key placeholders
+3. Ask the user for their API keys:
+   - Halliday API key (required) — get one at partnerships@halliday.xyz
+   - Wallet provider API keys (Dynamic, Privy, etc.) if applicable to the chosen example
+4. Insert the API keys into all required locations
 
-### Step 5: Run the Application
+### Step 5: Install Dependencies
 
-Only after all API keys are configured:
-1. Install dependencies (`npm install` or `yarn`)
-2. Start the development server
-3. Open the app in the browser and help the user test it
+```bash
+cd {CLONED_DIRECTORY} && npm install
+```
 
----
+**Verify:** Check for errors in the install output. If there are peer dependency warnings, note them but they are usually non-blocking.
 
-## Quick Reference
+### Step 6: Start Development Server
 
-### Fiat Onramp Providers
-Halliday implements multiple fiat-onramp providers including Stripe, Moonpay, Unlimit, Transak, and CEXs.
+```bash
+cd {CLONED_DIRECTORY} && npm run dev
+```
 
-### Getting an API Key
-Contact the Halliday team at partnerships@halliday.xyz
+Or `npm start` or `yarn dev` — check the README for the correct command.
 
-### Compliance
-- **KYC:** Required for fiat onramps only (handled by providers). Coinbase allows no-KYC up to $500 USD. No KYC for crypto-to-crypto swaps.
-- **Geographic restrictions:** Fiat onramps have restrictions that vary by provider. No restrictions on crypto-to-crypto swaps.
-- **Supported fiat currencies:** USD and EUR for onramping.
-- **Transaction limits:** Min/max limits for onramps vary by provider.
+### Step 7: Verify Application Runs
 
-### Try It Now
-Users can experience the Halliday widget immediately by visiting https://halliday.xyz/ and clicking "Try it now" on the home page.
-
-## Additional Resources
-
-If the developer needs API-level details beyond the main docs, fetch:
-- API specification (OpenAPI): https://docs.halliday.xyz/pages/llms-info
-- Example repositories: https://github.com/HallidayInc
-
-## Support
-
-- **General support:** support@halliday.xyz
-- **Partnerships & API keys:** partnerships@halliday.xyz
-- **Contact form:** https://halliday.xyz/contact
+- Confirm the dev server started without errors
+- Note the local URL (usually http://localhost:3000 or similar)
+- Tell the user to open the URL in their browser
+- Help the user test the payment flow
