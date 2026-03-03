@@ -6,6 +6,7 @@ description: |
   crypto deposits, buying crypto, payment widgets, CEX to L2, perp dex deposits,
   web3 payments, or onchain deposits.
 user-invocable: false
+allowed-tools: WebFetch(domain:docs.halliday.xyz), WebFetch(domain:raw.githubusercontent.com)
 ---
 
 # Halliday Payments Integration

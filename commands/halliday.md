@@ -2,6 +2,7 @@
 name: halliday
 description: Start a Halliday Payments integration — fiat-to-crypto onramps, cross-chain swaps, and crypto deposits
 disable-model-invocation: true
+allowed-tools: WebFetch(domain:docs.halliday.xyz), WebFetch(domain:raw.githubusercontent.com)
 ---
 
 # Halliday Payments
