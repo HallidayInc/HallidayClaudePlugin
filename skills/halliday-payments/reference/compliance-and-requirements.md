@@ -25,9 +25,7 @@ Minimum and maximum transaction amounts for fiat onramps vary by provider. There
 
 ## Supported Chains and Assets
 
-Chain and asset support changes frequently. Always use the live API to get current data:
-- **Chains**: https://docs.halliday.xyz/api-reference/chains/get-supported-chains
-- **Assets**: https://docs.halliday.xyz/api-reference/assets/get-asset-details
+Chain and asset support changes frequently. Grep `sources/openapi.json` for `supported-chains` or `asset-details` to find the relevant endpoint schemas.
 
 ## Sandbox / Testing
 

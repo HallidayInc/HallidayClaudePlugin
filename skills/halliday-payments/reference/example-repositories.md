@@ -42,8 +42,8 @@ Use these when the developer wants full control over the payment interface.
    - Other/none → Vanilla or basic React examples
 
 4. **What web3 library?**
-   - Ethers.js → Ethers examples
    - Wagmi → Wagmi examples
+   - Ethers.js → Ethers examples
 
 ## Fetching Example Code
 
