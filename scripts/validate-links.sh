@@ -14,7 +14,6 @@ echo "=== Checking URLs in skill and reference files ==="
 # Extract unique URLs from skill and reference markdown files, excluding template URLs with {placeholders}
 URLS=$(grep -rhoE 'https?://[^\s\)\"'"'"'`>]+' \
   "$REPO_ROOT/skills/" \
-  "$REPO_ROOT/CLAUDE.md" \
   | grep -v '{' \
   | grep -v 'localhost' \
   | sort -u)
