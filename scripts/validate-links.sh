@@ -11,19 +11,21 @@ ERRORS=0
 
 echo "=== Checking URLs in skill and reference files ==="
 
-# Extract unique URLs from skill and reference markdown files, excluding template URLs with {placeholders}
-URLS=$(grep -rhoE 'https?://[^\s\)\"'"'"'`>]+' \
+# Extract unique URLs from skill and reference markdown files.
+# Use POSIX [:space:] instead of \s for portability across grep versions.
+# Exclude template URLs with {placeholders} and localhost.
+URLS=$(grep -rhoP 'https?://[^\s\)\"'"'"'`>]+' \
   "$REPO_ROOT/skills/" \
+  2>/dev/null \
   | grep -v '{' \
   | grep -v 'localhost' \
+  | sed 's/[,.)]*$//' \
   | sort -u)
 
-for url in $URLS; do
-  # Strip trailing punctuation that may have been captured
-  url="${url%,}"
-  url="${url%.}"
+while IFS= read -r url; do
+  [[ -z "$url" ]] && continue
 
-  STATUS=$(curl -sf -o /dev/null -w "%{http_code}" --retry 2 --retry-delay 3 --max-time 10 "$url" 2>/dev/null || echo "000")
+  STATUS=$(curl -s -o /dev/null -w "%{http_code}" --retry 2 --retry-delay 3 --max-time 10 "$url" 2>/dev/null || echo "000")
   if [[ "$STATUS" == "404" ]]; then
     echo "  FAIL (404): $url"
     ERRORS=$((ERRORS + 1))
@@ -32,7 +34,7 @@ for url in $URLS; do
   else
     echo "  OK ($STATUS): $url"
   fi
-done
+done <<< "$URLS"
 
 echo ""
 echo "=== Checking API endpoints exist in OpenAPI spec ==="
@@ -42,7 +44,7 @@ if [[ ! -f "$OPENAPI" ]]; then
   echo "  SKIP: sources/openapi.json not found"
 else
   # Extract API endpoint paths referenced in reference files (e.g. /v2/payments, /quotes)
-  ENDPOINTS=$(grep -rhoE '(GET|POST|PUT|DELETE|PATCH)\s+/[a-zA-Z0-9/_-]+' \
+  ENDPOINTS=$(grep -rhoP '(GET|POST|PUT|DELETE|PATCH)\s+/[a-zA-Z0-9/_-]+' \
     "$REPO_ROOT/skills/" 2>/dev/null \
     | awk '{print $2}' \
     | sort -u)
@@ -50,14 +52,15 @@ else
   if [[ -z "$ENDPOINTS" ]]; then
     echo "  No explicit endpoint references found in skill files (OK)"
   else
-    for endpoint in $ENDPOINTS; do
+    while IFS= read -r endpoint; do
+      [[ -z "$endpoint" ]] && continue
       if grep -q "\"$endpoint\"" "$OPENAPI"; then
         echo "  OK: $endpoint"
       else
         echo "  FAIL: $endpoint not found in openapi.json"
         ERRORS=$((ERRORS + 1))
       fi
-    done
+    done <<< "$ENDPOINTS"
   fi
 fi
 
