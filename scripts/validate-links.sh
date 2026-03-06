@@ -47,7 +47,7 @@ else
   ENDPOINTS=$(grep -rhoP '(GET|POST|PUT|DELETE|PATCH)\s+/[a-zA-Z0-9/_-]+' \
     "$REPO_ROOT/skills/" 2>/dev/null \
     | awk '{print $2}' \
-    | sort -u)
+    | sort -u || true)
 
   if [[ -z "$ENDPOINTS" ]]; then
     echo "  No explicit endpoint references found in skill files (OK)"
