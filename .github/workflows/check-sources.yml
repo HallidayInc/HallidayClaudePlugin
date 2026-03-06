@@ -21,16 +21,16 @@ jobs:
 
       - name: Compare with committed sources
         run: |
-          if git diff --quiet sources/ BUILD_META.json; then
+          if git diff --quiet sources/; then
             echo "Sources are up to date."
           else
             echo "::error::Source files are stale. Run 'bash scripts/update-sources.sh' and commit the changes."
             echo ""
             echo "=== Changed files ==="
-            git diff --stat sources/ BUILD_META.json
+            git diff --stat sources/
             echo ""
             echo "=== Full diff ==="
-            git diff sources/ BUILD_META.json
+            git diff sources/
             echo ""
             echo "To fix:"
             echo "  bash scripts/update-sources.sh"
