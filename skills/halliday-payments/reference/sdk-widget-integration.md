@@ -57,6 +57,7 @@ A wallet provider object can be passed to the widget configuration. Refer to the
 | [HallidaySdkDynamicEthers](https://github.com/HallidayInc/HallidaySdkDynamicEthers) | React + Dynamic + Ethers.js |
 | [HallidaySdkDynamicWagmi](https://github.com/HallidayInc/HallidaySdkDynamicWagmi) | React + Dynamic + Wagmi |
 | [HallidaySdkPrivyReactExample](https://github.com/HallidayInc/HallidaySdkPrivyReactExample) | React + Privy + Vite |
+| [HallidaySdkViemWagmiRainbowkitExample](https://github.com/HallidayInc/HallidaySdkViemWagmiRainbowkitExample) | React + Viem + Wagmi + Rainbowkit |
 
 To fetch an example's README for setup instructions:
 ```

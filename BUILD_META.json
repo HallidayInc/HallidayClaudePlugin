@@ -1,0 +1,18 @@
+{
+  "commit": "6aa5a70bdf51051a6244d2c0af990023221121f1",
+  "timestamp": "2026-03-06T19:32:18Z",
+  "sources": {
+    "openapi.json": {
+      "url": "https://v2.prod.halliday.xyz/api",
+      "sha256": "7b180a39fbbb77056eabb7223ba46db88318a6e2c4f85b69dadf5e89b67f944e"
+    },
+    "sdk-types.d.ts": {
+      "url": "https://cdn.jsdelivr.net/npm/@halliday-sdk/payments/dist/paymentsWidget/index.d.ts",
+      "sha256": "7a3a58486b55bdc8bd999c6ab38159531511ac91384c11166fe3b8cd2b032977"
+    },
+    "docs-full.txt": {
+      "url": "https://docs.halliday.xyz/llms-full.txt",
+      "sha256": "efe2d8c7a96b9c80d334c7caec7ab2679f0b6329b1646bfa4a9e5510a3b8c986"
+    }
+  }
+}

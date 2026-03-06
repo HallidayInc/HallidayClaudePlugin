@@ -6,11 +6,11 @@
 
 ## Expected Behavior
 
-1. The `halliday-payments` skill activates based on keyword match ("buy crypto", "deposit")
+1. The `halliday` skill activates based on keyword match ("buy crypto", "deposit")
 2. Claude reads `reference/api-integration.md` (not SDK widget reference)
 3. Claude correctly identifies that native iOS (Swift) requires the API approach — the SDK widget is web/React Native only
 4. Claude identifies `HallidayPaymentsApiExamples` or a React-based API example as reference, while noting the developer will need to adapt for Swift
-5. For API endpoint details, Claude fetches `https://docs.halliday.xyz/pages/llms-info` (the OpenAPI spec)
+5. For API endpoint details, Claude uses `Grep` on `sources/openapi.json` for the relevant endpoint, then `Read` only the matching lines (±50 lines of context)
 6. Claude mentions that payment provider screens require a secure mobile browser, not a plain WebView
 
 ## Expected Files Loaded
@@ -21,7 +21,8 @@
 
 ## What Should NOT Happen
 
-- Should NOT fetch `https://docs.halliday.xyz/llms-full.txt` immediately
+- Should NOT WebFetch any external docs — all source data is local in `sources/`
+- Should NOT Read `sources/openapi.json` or `sources/docs-full.txt` whole — use Grep to find relevant sections
 - Should NOT recommend the SDK widget for a native Swift iOS app
 - Should NOT load `reference/sdk-widget-integration.md` (developer needs API, not widget)
 - Should NOT fabricate Swift code examples — Halliday doesn't provide Swift examples

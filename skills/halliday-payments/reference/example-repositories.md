@@ -12,6 +12,7 @@ Use these when the developer wants the drop-in widget UI.
 | [HallidaySdkDynamicEthers](https://github.com/HallidayInc/HallidaySdkDynamicEthers) | SDK widget + Dynamic wallet + Ethers.js | React apps with Dynamic using Ethers |
 | [HallidaySdkDynamicWagmi](https://github.com/HallidayInc/HallidaySdkDynamicWagmi) | SDK widget + Dynamic wallet + Wagmi | React apps with Dynamic using Wagmi |
 | [HallidaySdkPrivyReactExample](https://github.com/HallidayInc/HallidaySdkPrivyReactExample) | SDK widget + Privy + Vite | React apps with Privy |
+| [HallidaySdkViemWagmiRainbowkitExample](https://github.com/HallidayInc/HallidaySdkViemWagmiRainbowkitExample) | SDK widget + Viem + Wagmi + Rainbowkit | React apps with Rainbowkit |
 
 ## Custom UI via API Examples
 
@@ -37,6 +38,7 @@ Use these when the developer wants full control over the payment interface.
 3. **What wallet provider?**
    - Dynamic → Dynamic examples
    - Privy → Privy examples
+   - Rainbowkit → Rainbowkit example
    - Other/none → Vanilla or basic React examples
 
 4. **What web3 library?**
