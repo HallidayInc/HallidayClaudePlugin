@@ -12,6 +12,8 @@ Use these when the developer wants the drop-in widget UI.
 | [HallidaySdkDynamicEthers](https://github.com/HallidayInc/HallidaySdkDynamicEthers) | SDK widget + Dynamic wallet + Ethers.js | React apps with Dynamic using Ethers |
 | [HallidaySdkDynamicWagmi](https://github.com/HallidayInc/HallidaySdkDynamicWagmi) | SDK widget + Dynamic wallet + Wagmi | React apps with Dynamic using Wagmi |
 | [HallidaySdkPrivyReactExample](https://github.com/HallidayInc/HallidaySdkPrivyReactExample) | SDK widget + Privy + Vite | React apps with Privy |
+| [HallidaySdkViemWagmiRainbowkitExample](https://github.com/HallidayInc/HallidaySdkViemWagmiRainbowkitExample) | SDK widget + Viem + Wagmi + Rainbowkit | React apps with Rainbowkit |
+| [HallidaySdkReactNative](https://github.com/HallidayInc/HallidaySdkReactNative) | SDK widget in WebView + Reown + Expo + Ethers.js | React Native apps |
 
 ## Custom UI via API Examples
 
@@ -23,6 +25,7 @@ Use these when the developer wants full control over the payment interface.
 | [HallidayPaymentsApiExamplesReact](https://github.com/HallidayInc/HallidayPaymentsApiExamplesReact) | API + custom UI in React | React apps with custom UI |
 | [HallidayApiDynamicExamplesWagmi](https://github.com/HallidayInc/HallidayApiDynamicExamplesWagmi) | API + Dynamic + Wagmi + custom UI | React + Dynamic with custom UI |
 | [HallidayApiPrivyReactExamples](https://github.com/HallidayInc/HallidayApiPrivyReactExamples) | API + Privy + Vite + custom UI | React + Privy with custom UI |
+| [HallidayApiReactNative](https://github.com/HallidayInc/HallidayApiReactNative) | API + Reown + Expo + Wagmi + optional Dynamic embedded wallet | React Native apps with custom UI |
 
 ## Selecting the Right Example
 
@@ -33,15 +36,17 @@ Use these when the developer wants full control over the payment interface.
 2. **What framework are they using?**
    - No framework → Vanilla examples
    - React → React examples
+   - React Native → React Native examples
 
 3. **What wallet provider?**
    - Dynamic → Dynamic examples
    - Privy → Privy examples
+   - Rainbowkit → Rainbowkit example
    - Other/none → Vanilla or basic React examples
 
 4. **What web3 library?**
-   - Ethers.js → Ethers examples
    - Wagmi → Wagmi examples
+   - Ethers.js → Ethers examples
 
 ## Fetching Example Code
 

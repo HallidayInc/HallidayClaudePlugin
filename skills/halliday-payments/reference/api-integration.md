@@ -21,7 +21,7 @@ The Halliday API uses REST endpoints to manage payment sessions. The core flow i
 ## API Specification
 
 For endpoint details, request/response schemas, and authentication:
-Fetch https://docs.halliday.xyz/pages/llms-info — this page contains the embedded OpenAPI YAML specification.
+Use `Grep` on `sources/openapi.json` to find the relevant endpoint or schema, then `Read` only the matching lines (±50 lines of context). **Do not load the file whole.**
 
 ## Key Concepts
 
@@ -34,9 +34,7 @@ All API requests require a Halliday API key. Contact partnerships@halliday.xyz t
 
 ## Supported Chains and Assets
 
-These change frequently. Use the live API endpoints to get current data:
-- Chains: https://docs.halliday.xyz/api-reference/chains/get-supported-chains
-- Assets: https://docs.halliday.xyz/api-reference/assets/get-asset-details
+These change frequently. Grep `sources/openapi.json` for `supported-chains` or `asset-details` to find the relevant endpoint schemas.
 
 ## Example Repositories
 
@@ -52,9 +50,11 @@ To fetch an example's README for setup instructions:
 web_fetch https://raw.githubusercontent.com/HallidayInc/{REPO_NAME}/main/README.md
 ```
 
-## When to Fetch API Specification
+## When to Use the OpenAPI Spec
 
-Fetch https://docs.halliday.xyz/pages/llms-info when:
+Grep `sources/openapi.json` when:
 - The developer needs exact endpoint paths, parameters, or response shapes
 - You need to construct an API request and must verify the schema
 - The developer asks about specific API capabilities not covered here
+
+**Do not load `sources/openapi.json` whole. Do not WebFetch external docs.**

@@ -6,7 +6,7 @@
 
 ## Expected Behavior
 
-1. The `halliday-payments` skill activates based on context (Halliday-related question)
+1. The `halliday` skill activates based on context (Halliday-related question)
 2. Claude reads `reference/compliance-and-requirements.md` — this file contains all the information needed to answer
 3. Claude explains:
    - KYC is required for fiat onramps but handled by the provider (not Halliday)
@@ -23,8 +23,8 @@
 
 ## What Should NOT Happen
 
-- Should NOT fetch `https://docs.halliday.xyz/llms-full.txt` — the reference file has everything needed
-- Should NOT fetch `https://docs.halliday.xyz/pages/llms-info` — not an API question
+- Should NOT WebFetch any external docs — all source data is local in `sources/`
+- Should NOT Grep `sources/openapi.json` — not an API endpoint question
 - Should NOT load `reference/sdk-widget-integration.md` or `reference/api-integration.md` — not an integration question
 - Should NOT load `reference/example-repositories.md` — not asking about examples
 - Should NOT make up specific country lists — the reference file correctly states restrictions vary by provider

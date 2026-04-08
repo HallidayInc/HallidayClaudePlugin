@@ -1,0 +1,102 @@
+---
+title: Payments Hello World
+sidebarTitle: Payments Hello World
+public: true
+---
+The fastest way to implement Halliday Payments is by utilizing the widget user interface.
+
+## Try the Halliday Payments SDK Widget
+
+Following this guide, or the [Widget Documentation](/pages/payments-sdk-docs) guide will result in an onramp expeirence like the following.
+
+Try out onramping to an external wallet with this button:
+
+import { OnrampWithWalletConnector } from '/snippets/OnrampWithWalletConnector.jsx';
+
+<OnrampWithWalletConnector />
+
+### Integrate Halliday Payments
+
+Follow these steps to integrate Halliday Payments in just a few minutes.
+
+<Steps>
+<Step title="Obtain API Keys">
+<Note>
+To get set up with API access for Halliday Payments, please reach out to [partnerships@halliday.xyz](mailto:partnerships@halliday.xyz).
+</Note>
+</Step>
+
+<Step title="Integrate">
+
+First, install the Halliday Payments SDK into a web project.
+
+<Tabs>
+  <Tab title="npm">
+    ```shell copy
+    npm install @halliday-sdk/payments
+    ```
+  </Tab>
+  <Tab title="yarn">
+    ```shell copy
+    yarn add @halliday-sdk/payments
+    ```
+  </Tab>
+  <Tab title="HTML">
+    ```html copy
+    <script src="https://cdn.jsdelivr.net/npm/@halliday-sdk/payments@latest/dist/paymentsWidget/index.umd.min.js"></script>
+    ```
+  </Tab>
+</Tabs>
+
+Next, integrate Halliday Payments into an existing application with a few lines of code. This example is in a React.js project.
+
+<Tabs>
+  <Tab title="React">
+    ```tsx copy
+    import { openHallidayPayments } from "@halliday-sdk/payments";
+
+    // openHallidayPayments will open a popup that begins the payments flow.
+    // Customize the button to match a DApp's existing styles.
+
+    <button
+        onClick={() => {
+            openHallidayPayments({
+                apiKey: HALLIDAY_PUBLIC_API_KEY,
+                // USDC on Base
+                outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"],
+                // windowType can also be "POPUP" or "EMBED"
+                windowType: "MODAL",
+            });
+        }}
+    >
+        Pay with Halliday
+    </button>
+    ```
+  </Tab>
+  <Tab title="HTML">
+    ```html copy
+    <html>
+    <body>
+        <div id="halliday"></div>
+    </body>
+    <script src="https://cdn.jsdelivr.net/npm/@halliday-sdk/payments@latest/dist/paymentsWidget/index.umd.min.js"></script>
+    <script>
+        hallidayPayments.openHallidayPayments({
+            apiKey: HALLIDAY_PUBLIC_API_KEY,
+            // USDC on Base
+            outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"],
+            // windowType can also be "POPUP" or "EMBED"
+            windowType: "MODAL",
+            // The HTML element id to render the iframe inside of
+            targetElementId: "halliday",
+        });
+    </script>
+    </html>
+    ```
+  </Tab>
+</Tabs>
+
+Run the app page and try onramping or swapping tokens with the newly implemented Halliday Payments Payments Widget. Try it now using the **button** above.
+
+</Step>
+</Steps>

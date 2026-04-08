@@ -24,12 +24,11 @@ Or load via CDN:
 The widget is opened by calling `openHallidayPayments()` with a configuration object. Do NOT guess or fabricate configuration parameters — refer to the official documentation for the exact config shape.
 
 **To get the current configuration options and parameters:**
-Fetch https://docs.halliday.xyz/llms-full.txt and search for the `openHallidayPayments` section.
+Read `sources/sdk-types.d.ts` (small enough to load whole) for all TypeScript types and `openHallidayPayments()` params. For additional context, Grep `sources/docs-full.txt` for the `openHallidayPayments` section.
 
 ## Customization
 
-The SDK widget supports custom styling (colors, branding). Configuration options are documented at:
-https://docs.halliday.xyz/pages/payments-sdk-docs#customizing-styles
+The SDK widget supports custom styling (colors, branding). Grep `sources/docs-full.txt` for `customizing-styles` or `theme` to find the styling configuration options.
 
 ## Wallet Compatibility
 
@@ -39,6 +38,8 @@ Works with any EVM-compatible wallet provider:
 - RainbowKit
 - MetaMask
 - WalletConnect
+- Viem
+- Wagmi
 - Any other EVM wallet
 
 A wallet provider object can be passed to the widget configuration. Refer to the docs for the exact parameter name and format.
@@ -57,15 +58,18 @@ A wallet provider object can be passed to the widget configuration. Refer to the
 | [HallidaySdkDynamicEthers](https://github.com/HallidayInc/HallidaySdkDynamicEthers) | React + Dynamic + Ethers.js |
 | [HallidaySdkDynamicWagmi](https://github.com/HallidayInc/HallidaySdkDynamicWagmi) | React + Dynamic + Wagmi |
 | [HallidaySdkPrivyReactExample](https://github.com/HallidayInc/HallidaySdkPrivyReactExample) | React + Privy + Vite |
+| [HallidaySdkViemWagmiRainbowkitExample](https://github.com/HallidayInc/HallidaySdkViemWagmiRainbowkitExample) | React + Viem + Wagmi + Rainbowkit |
 
 To fetch an example's README for setup instructions:
 ```
 web_fetch https://raw.githubusercontent.com/HallidayInc/{REPO_NAME}/main/README.md
 ```
 
-## When to Fetch Full Documentation
+## When to Use Raw Source Files
 
-Only fetch https://docs.halliday.xyz/llms-full.txt when:
-- The developer needs the exact `openHallidayPayments()` configuration parameters
-- The developer asks about a specific widget feature not covered here
-- You need to provide a code example and must verify it against official docs
+Use the local raw source files when:
+- The developer needs the exact `openHallidayPayments()` configuration parameters → Read `sources/sdk-types.d.ts`
+- The developer asks about a specific widget feature not covered here → Grep `sources/docs-full.txt`
+- You need to provide a code example and must verify it against official sources → Grep `sources/docs-full.txt`
+
+**Do not load `sources/docs-full.txt` whole. Do not WebFetch external docs.**

@@ -17,10 +17,10 @@ Yes. React Native apps can use the SDK widget. Native mobile apps (Swift/Kotlin)
 ## API and Data
 
 **"Which chains are supported?"**
-Use the live API: https://docs.halliday.xyz/api-reference/chains/get-supported-chains
+Grep `sources/openapi.json` for `supported-chains` to find the endpoint schema and supported chain list.
 
 **"Which assets/tokens are supported?"**
-Use the live API: https://docs.halliday.xyz/api-reference/assets/get-asset-details
+Grep `sources/openapi.json` for `asset-details` to find the endpoint schema and supported assets.
 
 **"How do I handle webhooks?"**
 Webhook support is coming soon. Currently, use polling or the SDK's built-in state management to track transaction status.
