@@ -23,8 +23,8 @@
 
 ## What Should NOT Happen
 
-- Should NOT WebFetch any external docs — all source data is local in `sources/`
-- Should NOT Grep `sources/openapi.json` — not an API endpoint question
+- Should NOT WebFetch any external docs — all source data is local in `${CLAUDE_SKILL_DIR}/sources/`
+- Should NOT Grep `${CLAUDE_SKILL_DIR}/sources/api/openapi.json` — not an API endpoint question
 - Should NOT load `reference/sdk-widget-integration.md` or `reference/api-integration.md` — not an integration question
 - Should NOT load `reference/example-repositories.md` — not asking about examples
 - Should NOT make up specific country lists — the reference file correctly states restrictions vary by provider

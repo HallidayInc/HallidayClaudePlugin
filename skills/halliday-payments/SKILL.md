@@ -2,11 +2,18 @@
 name: halliday
 description: |
   Integrates Halliday Payments for crypto deposits, fiat-to-crypto onramps, and cross-chain swaps.
-  Activated when users mention crypto payments, onramps, cross-chain swaps, deposit widgets,
+  Provides SDK widget setup, API integration guides, example repository cloning, and
+  troubleshooting for Halliday integrations.
+when_to_use: |
+  When users mention crypto payments, onramps, cross-chain swaps, deposit widgets,
   crypto deposits, buying crypto, payment widgets, CEX to L2, perp dex deposits,
   web3 payments, or onchain deposits.
 user-invocable: true
-allowed-tools: Read, Grep, Bash(scripts/git-fetch.sh), WebFetch(domain:raw.githubusercontent.com)
+argument-hint: "[question]"
+allowed-tools: Read, Grep, Bash(${CLAUDE_SKILL_DIR}/scripts/git-fetch.sh *), WebFetch(domain:raw.githubusercontent.com)
+paths:
+  - "**/*halliday*"
+  - "**/package.json"
 ---
 
 # Halliday Payments Integration
@@ -22,11 +29,30 @@ allowed-tools: Read, Grep, Bash(scripts/git-fetch.sh), WebFetch(domain:raw.githu
 - [Using raw source files](#using-raw-source-files-context-safe)
 - [Support](#support)
 
+## Quick Start
+
+```bash
+npm install @halliday-sdk/payments
+```
+
+```js
+import { openHallidayPayments } from "@halliday-sdk/payments";
+
+openHallidayPayments({
+  apiKey: "YOUR_API_KEY", // Free at https://dashboard.halliday.xyz/
+});
+```
+
+For full configuration options, read `${CLAUDE_SKILL_DIR}/sources/sdk/index.d.ts`.
+
+---
+
 ## Activation Modes
 
-This skill has two activation modes:
+This skill has three activation modes:
 
-- **`/halliday` invocation:** Show the [onboarding](#onboarding) check, then the [initialization menu](#initialization-menu).
+- **`/halliday` with no arguments:** Show the [onboarding](#onboarding) check, then the [initialization menu](#initialization-menu).
+- **`/halliday <question>`:** Skip the menu. Treat `$ARGUMENTS` as the developer's question and go directly to the [routing table](#option-1-ask-questions-and-learn).
 - **Auto-activated** (keyword match): Skip the menu. Go directly to the [routing table](#option-1-ask-questions-and-learn) and answer the developer's question.
 
 ## Onboarding
@@ -34,10 +60,8 @@ This skill has two activation modes:
 Before starting any integration work, check whether the developer has a Halliday API key.
 
 If the developer **does not have an API key** (or hasn't mentioned one):
-- Tell them: "You'll need a Halliday API key to run any integration. Email **partnerships@halliday.xyz** to request one."
-- They can still explore documentation, ask questions, and clone sample apps while waiting for their key.
-
-<!-- TODO: Replace email flow with self-serve dashboard once available -->
+- Tell them: "You'll need a Halliday API key to run any integration. Create a free account at **https://dashboard.halliday.xyz/** to get one."
+- They can still explore documentation, ask questions, and clone sample apps while waiting.
 
 If the developer **already has an API key**: proceed directly.
 
@@ -134,7 +158,7 @@ Ask the user using AskUserQuestion:
 **Do not use `git clone` directly.** Use the allowlisted wrapper script:
 
 ```bash
-bash scripts/git-fetch.sh {REPOSITORY_NAME}
+bash ${CLAUDE_SKILL_DIR}/scripts/git-fetch.sh {REPOSITORY_NAME}
 ```
 
 This script validates the repo name against an allowlist of HallidayInc repositories before cloning. Run it without arguments to see the full list of allowed repos.
@@ -149,7 +173,7 @@ This script validates the repo name against an allowlist of HallidayInc reposito
    - Search for placeholders: `YOUR_API_KEY`, `HALLIDAY_API_KEY`, `NEXT_PUBLIC_HALLIDAY_API_KEY`, etc.
    - Check config files and source files for any other key placeholders
 3. Ask the user for their API keys:
-   - Halliday API key (required) — get one at partnerships@halliday.xyz
+   - Halliday API key (required) — free at https://dashboard.halliday.xyz/
    - Wallet provider API keys (Dynamic, Privy, etc.) if applicable to the chosen example
 4. Insert the API keys into all required locations
 
@@ -184,26 +208,27 @@ Or `npm start` or `yarn dev` — check the README for the correct command.
 
 ## Using Raw Source Files (context-safe)
 
-Local copies of Halliday's live sources are stored in `sources/` and kept fresh via CI.
+Local copies of Halliday's live sources are stored in `${CLAUDE_SKILL_DIR}/sources/` and kept fresh via CI.
 
 **CRITICAL: Never Read these files whole (except sdk/index.d.ts). They are too large and will pollute your context. Use Grep to find relevant sections, then Read only those lines.**
 
 | Source file | ~Tokens | How to use |
 |-------------|---------|------------|
-| `sources/sdk/index.d.ts` | ~6K | **Safe to Read whole.** Contains all TypeScript types, `openHallidayPayments()` params, widget config options, wallet interface. Load this when verifying parameter names or types. |
-| `sources/api/openapi.yaml` | ~47K | **Grep only.** Use `Grep` to search for endpoint paths (e.g. `/payments`), schema names (e.g. `QuoteRequest`), or field names. Then `Read` only the matching lines ±50 lines of context. |
-| `sources/docs/*.mdx` | ~49K total | **Grep only.** Individual documentation pages. Use `Grep` to search for topic keywords (e.g. "onramp", "cross-chain", "EIP-712"). Then `Read` only the matching file/section. |
+| `${CLAUDE_SKILL_DIR}/sources/sdk/index.d.ts` | ~6K | **Safe to Read whole.** Contains all TypeScript types, `openHallidayPayments()` params, widget config options, wallet interface. Load this when verifying parameter names or types. |
+| `${CLAUDE_SKILL_DIR}/sources/api/openapi.json` | ~47K | **Grep only.** Use `Grep` to search for endpoint paths (e.g. `/payments`), schema names (e.g. `QuoteRequest`), or field names. Then `Read` only the matching lines ±50 lines of context. |
+| `${CLAUDE_SKILL_DIR}/sources/docs/*.mdx` | ~49K total | **Grep only.** Individual documentation pages. Use `Grep` to search for topic keywords (e.g. "onramp", "cross-chain", "EIP-712"). Then `Read` only the matching file/section. |
 
 **Lookup order:**
 1. Check the curated reference file first (routing table above)
 2. If it lacks detail → Grep the relevant raw source file for the specific item
 
-**All source data is local. Do not WebFetch docs.halliday.xyz — the raw source files in `sources/` replace that pattern.**
+**All source data is local. Do not WebFetch docs.halliday.xyz — the raw source files in `${CLAUDE_SKILL_DIR}/sources/` replace that pattern.**
 
-**Never load all source files at once. Never load openapi.yaml or all docs pages whole.**
+**Never load all source files at once. Never load openapi.json or all docs pages whole.**
 
 ## Support
 
 - General: support@halliday.xyz
-- Partnerships & API keys: partnerships@halliday.xyz
+- API keys: https://dashboard.halliday.xyz/ (free)
+- Partnerships: partnerships@halliday.xyz
 - Contact form: https://halliday.xyz/contact

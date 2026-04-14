@@ -11,7 +11,7 @@
 3. Claude recommends the SDK widget as the integration approach
 4. Claude identifies `HallidaySdkDynamicWagmi` as the matching example repo
 5. Claude provides guidance based on the reference file content
-6. If the developer asks for specific `openHallidayPayments()` parameters, Claude reads `sources/sdk-types.d.ts` (small enough to load whole) to verify them
+6. If the developer asks for specific `openHallidayPayments()` parameters, Claude reads `${CLAUDE_SKILL_DIR}/sources/sdk/index.d.ts` (small enough to load whole) to verify them
 7. Claude does NOT fabricate configuration parameters
 
 ## Expected Files Loaded
@@ -22,8 +22,8 @@
 
 ## What Should NOT Happen
 
-- Should NOT WebFetch any external docs — all source data is local in `sources/`
-- Should NOT Read `sources/openapi.json` or `sources/docs-full.txt` whole — use Grep for targeted lookups
+- Should NOT WebFetch any external docs — all source data is local in `${CLAUDE_SKILL_DIR}/sources/`
+- Should NOT Read `${CLAUDE_SKILL_DIR}/sources/api/openapi.json` or docs files whole — use Grep for targeted lookups
 - Should NOT load all five reference files at once
 - Should NOT load `reference/api-integration.md` (developer asked for widget, not API)
 - Should NOT load `reference/compliance-and-requirements.md` (not relevant to this question)

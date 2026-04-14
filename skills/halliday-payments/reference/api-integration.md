@@ -21,7 +21,7 @@ The Halliday API uses REST endpoints to manage payment sessions. The core flow i
 ## API Specification
 
 For endpoint details, request/response schemas, and authentication:
-Use `Grep` on `sources/openapi.json` to find the relevant endpoint or schema, then `Read` only the matching lines (±50 lines of context). **Do not load the file whole.**
+Use `Grep` on `${CLAUDE_SKILL_DIR}/sources/api/openapi.json` to find the relevant endpoint or schema, then `Read` only the matching lines (±50 lines of context). **Do not load the file whole.**
 
 ## Key Concepts
 
@@ -30,11 +30,11 @@ Use `Grep` on `sources/openapi.json` to find the relevant endpoint or schema, th
 
 ## Authentication
 
-All API requests require a Halliday API key. Contact partnerships@halliday.xyz to obtain one.
+All API requests require a Halliday API key. Create a free account at https://dashboard.halliday.xyz/ to get one.
 
 ## Supported Chains and Assets
 
-These change frequently. Grep `sources/openapi.json` for `supported-chains` or `asset-details` to find the relevant endpoint schemas.
+These change frequently. Grep `${CLAUDE_SKILL_DIR}/sources/api/openapi.json` for `supported-chains` or `asset-details` to find the relevant endpoint schemas.
 
 ## Example Repositories
 
@@ -52,9 +52,9 @@ web_fetch https://raw.githubusercontent.com/HallidayInc/{REPO_NAME}/main/README.
 
 ## When to Use the OpenAPI Spec
 
-Grep `sources/openapi.json` when:
+Grep `${CLAUDE_SKILL_DIR}/sources/api/openapi.json` when:
 - The developer needs exact endpoint paths, parameters, or response shapes
 - You need to construct an API request and must verify the schema
 - The developer asks about specific API capabilities not covered here
 
-**Do not load `sources/openapi.json` whole. Do not WebFetch external docs.**
+**Do not load the OpenAPI spec whole. Do not WebFetch external docs.**

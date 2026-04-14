@@ -25,8 +25,4 @@ Minimum and maximum transaction amounts for fiat onramps vary by provider. There
 
 ## Supported Chains and Assets
 
-Chain and asset support changes frequently. Grep `sources/openapi.json` for `supported-chains` or `asset-details` to find the relevant endpoint schemas.
-
-## Sandbox / Testing
-
-Contact the Halliday team for information about sandbox environment access and testing capabilities.
+Chain and asset support changes frequently. Grep `${CLAUDE_SKILL_DIR}/sources/api/openapi.json` for `supported-chains` or `asset-details` to find the relevant endpoint schemas.

@@ -17,10 +17,10 @@ Yes. React Native apps can use the SDK widget. Native mobile apps (Swift/Kotlin)
 ## API and Data
 
 **"Which chains are supported?"**
-Grep `sources/openapi.json` for `supported-chains` to find the endpoint schema and supported chain list.
+Grep `${CLAUDE_SKILL_DIR}/sources/api/openapi.json` for `supported-chains` to find the endpoint schema and supported chain list.
 
 **"Which assets/tokens are supported?"**
-Grep `sources/openapi.json` for `asset-details` to find the endpoint schema and supported assets.
+Grep `${CLAUDE_SKILL_DIR}/sources/api/openapi.json` for `asset-details` to find the endpoint schema and supported assets.
 
 **"How do I handle webhooks?"**
 Webhook support is coming soon. Currently, use polling or the SDK's built-in state management to track transaction status.
@@ -28,10 +28,10 @@ Webhook support is coming soon. Currently, use polling or the SDK's built-in sta
 ## Access and Compliance
 
 **"How do I get an API key?"**
-Contact partnerships@halliday.xyz.
+Create a free account at https://dashboard.halliday.xyz/.
 
-**"Is there a test/sandbox environment?"**
-Contact the Halliday team for sandbox access information.
+**"Is there a test environment?"**
+Contact the Halliday team for test information.
 
 **"Is KYC required?"**
 Only for fiat onramps (handled by the provider, not Halliday). Coinbase allows no-KYC up to $500 USD. No KYC for crypto-to-crypto swaps. See [compliance-and-requirements.md](compliance-and-requirements.md).

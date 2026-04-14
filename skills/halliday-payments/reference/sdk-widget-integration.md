@@ -24,11 +24,11 @@ Or load via CDN:
 The widget is opened by calling `openHallidayPayments()` with a configuration object. Do NOT guess or fabricate configuration parameters — refer to the official documentation for the exact config shape.
 
 **To get the current configuration options and parameters:**
-Read `sources/sdk-types.d.ts` (small enough to load whole) for all TypeScript types and `openHallidayPayments()` params. For additional context, Grep `sources/docs-full.txt` for the `openHallidayPayments` section.
+Read `${CLAUDE_SKILL_DIR}/sources/sdk/index.d.ts` (small enough to load whole) for all TypeScript types and `openHallidayPayments()` params. For additional context, Grep `${CLAUDE_SKILL_DIR}/sources/docs/` for the `openHallidayPayments` section.
 
 ## Customization
 
-The SDK widget supports custom styling (colors, branding). Grep `sources/docs-full.txt` for `customizing-styles` or `theme` to find the styling configuration options.
+The SDK widget supports custom styling (colors, branding). Grep `${CLAUDE_SKILL_DIR}/sources/docs/` for `customizing-styles` or `theme` to find the styling configuration options.
 
 ## Wallet Compatibility
 
@@ -68,8 +68,8 @@ web_fetch https://raw.githubusercontent.com/HallidayInc/{REPO_NAME}/main/README.
 ## When to Use Raw Source Files
 
 Use the local raw source files when:
-- The developer needs the exact `openHallidayPayments()` configuration parameters → Read `sources/sdk-types.d.ts`
-- The developer asks about a specific widget feature not covered here → Grep `sources/docs-full.txt`
-- You need to provide a code example and must verify it against official sources → Grep `sources/docs-full.txt`
+- The developer needs the exact `openHallidayPayments()` configuration parameters → Read `${CLAUDE_SKILL_DIR}/sources/sdk/index.d.ts`
+- The developer asks about a specific widget feature not covered here → Grep `${CLAUDE_SKILL_DIR}/sources/docs/`
+- You need to provide a code example and must verify it against official sources → Grep `${CLAUDE_SKILL_DIR}/sources/docs/`
 
-**Do not load `sources/docs-full.txt` whole. Do not WebFetch external docs.**
+**Do not load all source files at once. Do not WebFetch external docs.**
