@@ -24,4 +24,8 @@ claude plugin marketplace add HallidayInc/HallidayClaudePlugin && claude plugin 
 
 ## API Key
 
-You'll need a Halliday API key to run any integration. Contact partnerships@halliday.xyz to get one.
+You'll need a Halliday API key to run any integration. Go to https://dashboard.halliday.xyz/ to get a free API key.
+
+## Partnerships
+
+Contact us at partnerships@halliday.xyz.
