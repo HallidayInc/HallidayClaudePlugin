@@ -34,7 +34,10 @@ All API requests require a Halliday API key. Create a free account at https://da
 
 ## Supported Chains and Assets
 
-These change frequently. Grep `${CLAUDE_SKILL_DIR}/sources/api/openapi.json` for `supported-chains` or `asset-details` to find the relevant endpoint schemas.
+These change frequently. Query the API for live data:
+- Supported chains: `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /chains`
+- Supported assets: `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /assets`
+- Check a specific route: `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /assets/available-outputs "inputs[]=<INPUT>&outputs[]=<OUTPUT>"`
 
 ## Example Repositories
 

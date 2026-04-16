@@ -7,13 +7,19 @@ description: |
 when_to_use: |
   When users mention crypto payments, onramps, cross-chain swaps, deposit widgets,
   crypto deposits, buying crypto, payment widgets, CEX to L2, perp dex deposits,
-  web3 payments, or onchain deposits.
+  web3 payments, onchain deposits, halliday payment status, halliday payment lookup,
+  halliday integration check, or halliday payment debug.
 user-invocable: true
 argument-hint: "[question]"
-allowed-tools: Read, Grep, Bash(${CLAUDE_SKILL_DIR}/scripts/git-fetch.sh *), WebFetch(domain:raw.githubusercontent.com)
+allowed-tools: Read, Grep, Bash(${CLAUDE_SKILL_DIR}/scripts/git-fetch.sh *), Bash(${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh *), WebFetch(domain:raw.githubusercontent.com)
 paths:
   - "**/*halliday*"
   - "**/package.json"
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.js"
+  - "**/*.jsx"
+  - "**/*.html"
 ---
 
 # Halliday Payments Integration
@@ -25,8 +31,11 @@ paths:
 - [Initialization menu](#initialization-menu)
 - [Option 1: Ask questions and learn](#option-1-ask-questions-and-learn)
 - [Option 2: Clone a sample application](#option-2-clone-a-sample-application)
+- [Option 3: Check my integration](#option-3-check-my-integration)
+- [Option 4: Look up a payment](#option-4-look-up-a-payment)
 - [Code accuracy rules](#code-accuracy-rules)
 - [Using raw source files](#using-raw-source-files-context-safe)
+- [Using the Halliday API](#using-the-halliday-api)
 - [Support](#support)
 
 ## Quick Start
@@ -74,6 +83,8 @@ When invoked via `/halliday`, ask the user what they would like to do using the 
 **Options:**
 1. **Ask questions and learn about Halliday** — Learn about features, integration approaches, and get implementation help
 2. **Clone and run a sample application** — Get started quickly with an open source example app
+3. **Check my integration** — Review your Halliday integration for correctness and completeness
+4. **Look up a payment** — Get the status, details, and diagnosis of a payment by ID
 
 ---
 
@@ -92,12 +103,26 @@ If the user selects "Ask questions and learn about Halliday" (or if auto-activat
 | KYC, geographic restrictions, currencies, limits | [reference/compliance-and-requirements.md](reference/compliance-and-requirements.md) |
 | Help choosing an example repo, or cloning one | [reference/example-repositories.md](reference/example-repositories.md) |
 | General questions about Halliday capabilities | [reference/common-questions.md](reference/common-questions.md) |
+| Review integration for correctness and completeness | [reference/integration-checklist.md](reference/integration-checklist.md) |
+| Look up, check status, or debug a payment by ID | [reference/payment-lookup-guide.md](reference/payment-lookup-guide.md) |
 
 3. Let the user drive the conversation. Do not ask a series of guided questions — answer what they ask.
 
 4. **Use raw source files for additional detail** — see [Using raw source files](#using-raw-source-files-context-safe) below.
 
-**All source data is local. Do not WebFetch external documentation.**
+5. **Use the Halliday API for live chain, asset, and route data.** When the developer asks about supported chains, supported tokens/assets, or whether a specific input-to-output route is available, query the API instead of pointing them to the OpenAPI spec. This requires their API key — check if they provided one during onboarding, otherwise ask for it.
+
+   | Question type | API call |
+   |---------------|----------|
+   | Which chains are supported? | `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /chains` |
+   | Which tokens/assets are supported? | `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /assets` |
+   | Can I convert X to Y? / Is this route supported? | `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /assets/available-outputs "inputs[]=<INPUT>&outputs[]=<OUTPUT>"` |
+   | What can I get from input X? | `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /assets/available-outputs "inputs[]=<INPUT>"` |
+   | What inputs produce output Y? | `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /assets/available-inputs "outputs[]=<OUTPUT>"` |
+
+   Present the results in a readable format — don't dump raw JSON. For `/assets`, summarize the token list grouped by chain. For `/chains`, list chain names with chain IDs. For route checks, give a clear yes/no with the supported paths.
+
+**All other source data is local. Do not WebFetch external documentation.**
 
 ---
 
@@ -200,6 +225,80 @@ Or `npm start` or `yarn dev` — check the README for the correct command.
 - Tell the user to open the URL in their browser
 - Help the user test the payment flow
 
+## Option 3: Check My Integration
+
+If the user selects "Check my integration" (or if auto-activated with an integration review request):
+
+1. Read [reference/integration-checklist.md](reference/integration-checklist.md).
+
+2. Determine the integration type. Ask using AskUserQuestion:
+
+   **Question:** "Which type of Halliday integration are you using?"
+
+   **Options:**
+   1. **SDK Widget** — Using `@halliday-sdk/payments` and `openHallidayPayments()`
+   2. **Custom UI via API** — Using the REST API at `v2.prod.halliday.xyz`
+
+3. Scan the codebase to find Halliday integration code:
+
+   **For SDK Widget**, Grep for:
+   - `@halliday-sdk/payments`
+   - `openHallidayPayments`
+   - `initializeClient`
+
+   **For API**, Grep for:
+   - `v2.prod.halliday.xyz`
+   - `/payments/quotes`
+   - `/payments/confirm`
+   - `halliday` combined with `fetch`, `axios`, or HTTP client usage
+
+4. If no results found, ask the developer to specify which files contain their Halliday integration.
+
+5. Read the matching source files. Also read `package.json` for dependency checks.
+
+6. Evaluate each checklist item from the reference file against the code found.
+
+7. Report each item as **PASS** or **ISSUE** with a brief explanation of what breaks.
+
+8. **Only flag items that will literally break the integration** — errors, crashes, blank screens, or payments that cannot proceed. Do not flag best practices, security recommendations, UX suggestions, or optimizations.
+
+9. At the end, provide a summary (e.g. "4 PASS, 1 ISSUE") and for each ISSUE explain what specifically will fail and how to fix it.
+
+**Do not be pedantic. Do not fabricate checklist items. Only evaluate items from the reference file.**
+
+---
+
+## Option 4: Look Up a Payment
+
+If the user selects "Look up a payment" (or if auto-activated with a payment lookup/debug request):
+
+1. Read [reference/payment-lookup-guide.md](reference/payment-lookup-guide.md).
+
+2. Collect required information via AskUserQuestion:
+   - **Payment ID** (required) — the UUID string
+   - **API key** — check if the developer already provided one during onboarding. If not, ask for it. Be prepared to accept a different API key than the one used for integration.
+   - **Owner address** — only needed for `/payments/history` lookups
+
+3. Call the Halliday API using `api-fetch.sh`:
+   ```bash
+   bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <API_KEY> GET /payments "payment_id=<PAYMENT_ID>"
+   ```
+
+4. **Always present a clear payment summary first** — status, type, amounts, addresses, duration, fees. Follow the summary template in the reference guide.
+
+5. **Then provide status-specific details:**
+   - **COMPLETE:** Extract transaction hash from `fulfilled.route`, call `GET /chains` to build block explorer link
+   - **PENDING/UNCONFIRMED:** Show next instruction details and time remaining
+   - **FAILED or funded EXPIRED:** Call `POST /payments/balances` to check OTW balances, present recovery options (retry vs withdraw) with step-by-step instructions
+   - **WITHDRAWN:** Show completion details
+   - **TAINTED:** Explain sanctions screening, direct to support
+
+6. **Do not execute recovery actions** (withdraw, re-quote). Only explain the steps the developer needs to take.
+
+**Do not fabricate payment data. All information must come from the API response.**
+
+---
+
 ## Code Accuracy Rules
 
 1. **Never fabricate parameters.** Every parameter in an `openHallidayPayments()` call or API request must be verified against official documentation.
@@ -225,6 +324,44 @@ Local copies of Halliday's live sources are stored in `${CLAUDE_SKILL_DIR}/sourc
 **All source data is local. Do not WebFetch docs.halliday.xyz — the raw source files in `${CLAUDE_SKILL_DIR}/sources/` replace that pattern.**
 
 **Never load all source files at once. Never load openapi.json or all docs pages whole.**
+
+## Using the Halliday API
+
+The `api-fetch.sh` script makes authenticated calls to the Halliday REST API. It validates requests against an allowlist of read-only endpoints.
+
+**Usage:**
+```bash
+bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <API_KEY> <METHOD> <ENDPOINT> [QUERY_STRING] [JSON_BODY]
+```
+
+**Allowed endpoints:**
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | /payments | Get payment status by payment_id |
+| GET | /payments/history | Get payment history by owner_address |
+| POST | /payments/balances | Check OTW wallet balances for a payment |
+| GET | /chains | Get supported chains with explorer URLs |
+| GET | /assets | Get supported asset details |
+| GET | /assets/available-outputs | Verify input-to-output routes |
+| GET | /assets/available-inputs | Verify output-to-input routes |
+
+**Examples:**
+```bash
+# Get payment status
+bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh pk_key GET /payments "payment_id=abc123"
+
+# Check OTW balances
+bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh pk_key POST /payments/balances "" '{"payment_id":"abc123"}'
+
+# Get chain info for explorer links
+bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh pk_key GET /chains
+```
+
+The response includes the JSON body followed by the HTTP status code on the last line.
+
+**The developer's API key may already be available from the onboarding step.** If not, ask for it. Be prepared to accept a different key than the one used for integration.
+
+**Do not use api-fetch.sh for write operations (confirm, withdraw). It only supports read-only lookups.**
 
 ## Support
 

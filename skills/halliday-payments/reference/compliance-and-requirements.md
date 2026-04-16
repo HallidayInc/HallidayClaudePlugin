@@ -25,4 +25,7 @@ Minimum and maximum transaction amounts for fiat onramps vary by provider. There
 
 ## Supported Chains and Assets
 
-Chain and asset support changes frequently. Grep `${CLAUDE_SKILL_DIR}/sources/api/openapi.json` for `supported-chains` or `asset-details` to find the relevant endpoint schemas.
+Chain and asset support changes frequently. Query the API for live data:
+- Supported chains: `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /chains`
+- Supported assets: `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /assets`
+- Check a specific route: `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /assets/available-outputs "inputs[]=<INPUT>&outputs[]=<OUTPUT>"`
