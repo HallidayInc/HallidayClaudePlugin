@@ -11,7 +11,7 @@ when_to_use: |
   halliday integration check, or halliday payment debug.
 user-invocable: true
 argument-hint: "[question]"
-allowed-tools: Read, Grep, Bash(${CLAUDE_SKILL_DIR}/scripts/git-fetch.sh *), Bash(${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh *), WebFetch(domain:raw.githubusercontent.com)
+allowed-tools: Read, Grep, Glob, AskUserQuestion, WebFetch(domain:raw.githubusercontent.com), Bash(*/skills/halliday-payments/scripts/api-fetch.sh:*), Bash(*/skills/halliday-payments/scripts/git-fetch.sh:*)
 paths:
   - "**/*halliday*"
   - "**/package.json"
@@ -52,7 +52,7 @@ openHallidayPayments({
 });
 ```
 
-For full configuration options, read `${CLAUDE_SKILL_DIR}/sources/sdk/index.d.ts`.
+For full configuration options, read `${CLAUDE_PLUGIN_ROOT}/sources/sdk/index.d.ts`.
 
 ---
 
@@ -114,11 +114,11 @@ If the user selects "Ask questions and learn about Halliday" (or if auto-activat
 
    | Question type | API call |
    |---------------|----------|
-   | Which chains are supported? | `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /chains` |
-   | Which tokens/assets are supported? | `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /assets` |
-   | Can I convert X to Y? / Is this route supported? | `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /assets/available-outputs "inputs[]=<INPUT>&outputs[]=<OUTPUT>"` |
-   | What can I get from input X? | `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /assets/available-outputs "inputs[]=<INPUT>"` |
-   | What inputs produce output Y? | `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /assets/available-inputs "outputs[]=<OUTPUT>"` |
+   | Which chains are supported? | `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <KEY> GET /chains` |
+   | Which tokens/assets are supported? | `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <KEY> GET /assets` |
+   | Can I convert X to Y? / Is this route supported? | `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <KEY> GET /assets/available-outputs "inputs[]=<INPUT>&outputs[]=<OUTPUT>"` |
+   | What can I get from input X? | `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <KEY> GET /assets/available-outputs "inputs[]=<INPUT>"` |
+   | What inputs produce output Y? | `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <KEY> GET /assets/available-inputs "outputs[]=<OUTPUT>"` |
 
    Present the results in a readable format — don't dump raw JSON. For `/assets`, summarize the token list grouped by chain. For `/chains`, list chain names with chain IDs. For route checks, give a clear yes/no with the supported paths.
 
@@ -155,17 +155,26 @@ Ask the user using AskUserQuestion:
 
 ### Step 2: Choose Example Application
 
+**AskUserQuestion supports up to 4 options per call.** When the full list is longer, present the 3 most common options plus a **"More options"** final choice. Only call AskUserQuestion a second time with the remaining options if the user picks "More options".
+
 **If SDK Widget**, ask using AskUserQuestion:
 
 **Question:** "Which SDK Widget example would you like to clone?"
 
 **Options:**
 1. **Vanilla HTML/CSS/JS** — No framework (Repository: `HallidayPaymentsSdkExamples`)
-2. **React + Dynamic + Ethers** — React with Dynamic wallet and Ethers.js (Repository: `HallidaySdkDynamicEthers`)
+2. **React + Privy + Vite** — React with Privy wallet (Repository: `HallidaySdkPrivyReactExample`)
 3. **React + Dynamic + Wagmi** — React with Dynamic wallet and Wagmi (Repository: `HallidaySdkDynamicWagmi`)
-4. **React + Privy + Vite** — React with Privy wallet (Repository: `HallidaySdkPrivyReactExample`)
-5. **React + Viem + Wagmi + Rainbowkit** — React with Rainbowkit (Repository: `HallidaySdkViemWagmiRainbowkitExample`)
-6. **React Native + Reown + Expo + Ethers** — React Native with SDK widget in WebView (Repository: `HallidaySdkReactNative`)
+4. **More options**
+
+**If the user picks "More options"**, ask again:
+
+**Question:** "Which of these additional SDK Widget examples would you like to clone?"
+
+**Options:**
+1. **React + Dynamic + Ethers** — React with Dynamic wallet and Ethers.js (Repository: `HallidaySdkDynamicEthers`)
+2. **React + Viem + Wagmi + Rainbowkit** — React with Rainbowkit (Repository: `HallidaySdkViemWagmiRainbowkitExample`)
+3. **React Native + Reown + Expo + Ethers** — React Native with SDK widget in WebView (Repository: `HallidaySdkReactNative`)
 
 **If Custom UI via API**, ask using AskUserQuestion:
 
@@ -174,16 +183,23 @@ Ask the user using AskUserQuestion:
 **Options:**
 1. **Vanilla HTML/CSS/JS + API** — Custom UI in vanilla JS (Repository: `HallidayPaymentsApiExamples`)
 2. **React + API** — Custom UI in React (Repository: `HallidayPaymentsApiExamplesReact`)
-3. **React + Dynamic + Wagmi + API** — React + Dynamic with custom UI (Repository: `HallidayApiDynamicExamplesWagmi`)
-4. **React + Privy + Vite + API** — React + Privy with custom UI (Repository: `HallidayApiPrivyReactExamples`)
-5. **React Native + Reown + Expo + Wagmi + API** — React Native with custom UI and optional Dynamic embedded wallet (Repository: `HallidayApiReactNative`)
+3. **React + Privy + Vite + API** — React + Privy with custom UI (Repository: `HallidayApiPrivyReactExamples`)
+4. **More options**
+
+**If the user picks "More options"**, ask again:
+
+**Question:** "Which of these additional API examples would you like to clone?"
+
+**Options:**
+1. **React + Dynamic + Wagmi + API** — React + Dynamic with custom UI (Repository: `HallidayApiDynamicExamplesWagmi`)
+2. **React Native + Reown + Expo + Wagmi + API** — React Native with custom UI and optional Dynamic embedded wallet (Repository: `HallidayApiReactNative`)
 
 ### Step 3: Clone the Repository
 
 **Do not use `git clone` directly.** Use the allowlisted wrapper script:
 
 ```bash
-bash ${CLAUDE_SKILL_DIR}/scripts/git-fetch.sh {REPOSITORY_NAME}
+${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/git-fetch.sh {REPOSITORY_NAME}
 ```
 
 This script validates the repo name against an allowlist of HallidayInc repositories before cloning. Run it without arguments to see the full list of allowed repos.
@@ -281,7 +297,7 @@ If the user selects "Look up a payment" (or if auto-activated with a payment loo
 
 3. Call the Halliday API using `api-fetch.sh`:
    ```bash
-   bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <API_KEY> GET /payments "payment_id=<PAYMENT_ID>"
+   ${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <API_KEY> GET /payments "payment_id=<PAYMENT_ID>"
    ```
 
 4. **Always present a clear payment summary first** — status, type, amounts, addresses, duration, fees. Follow the summary template in the reference guide.
@@ -307,21 +323,21 @@ If the user selects "Look up a payment" (or if auto-activated with a payment loo
 
 ## Using Raw Source Files (context-safe)
 
-Local copies of Halliday's live sources are stored in `${CLAUDE_SKILL_DIR}/sources/` and kept fresh via CI.
+Local copies of Halliday's live sources are stored in `${CLAUDE_PLUGIN_ROOT}/sources/` and kept fresh via CI.
 
 **CRITICAL: Never Read these files whole (except sdk/index.d.ts). They are too large and will pollute your context. Use Grep to find relevant sections, then Read only those lines.**
 
 | Source file | ~Tokens | How to use |
 |-------------|---------|------------|
-| `${CLAUDE_SKILL_DIR}/sources/sdk/index.d.ts` | ~6K | **Safe to Read whole.** Contains all TypeScript types, `openHallidayPayments()` params, widget config options, wallet interface. Load this when verifying parameter names or types. |
-| `${CLAUDE_SKILL_DIR}/sources/api/openapi.json` | ~47K | **Grep only.** Use `Grep` to search for endpoint paths (e.g. `/payments`), schema names (e.g. `QuoteRequest`), or field names. Then `Read` only the matching lines ±50 lines of context. |
-| `${CLAUDE_SKILL_DIR}/sources/docs/*.mdx` | ~49K total | **Grep only.** Individual documentation pages. Use `Grep` to search for topic keywords (e.g. "onramp", "cross-chain", "EIP-712"). Then `Read` only the matching file/section. |
+| `${CLAUDE_PLUGIN_ROOT}/sources/sdk/index.d.ts` | ~6K | **Safe to Read whole.** Contains all TypeScript types, `openHallidayPayments()` params, widget config options, wallet interface. Load this when verifying parameter names or types. |
+| `${CLAUDE_PLUGIN_ROOT}/sources/api/openapi.json` | ~47K | **Grep only.** Use `Grep` to search for endpoint paths (e.g. `/payments`), schema names (e.g. `QuoteRequest`), or field names. Then `Read` only the matching lines ±50 lines of context. |
+| `${CLAUDE_PLUGIN_ROOT}/sources/docs/*.mdx` | ~49K total | **Grep only.** Individual documentation pages. Use `Grep` to search for topic keywords (e.g. "onramp", "cross-chain", "EIP-712"). Then `Read` only the matching file/section. |
 
 **Lookup order:**
 1. Check the curated reference file first (routing table above)
 2. If it lacks detail → Grep the relevant raw source file for the specific item
 
-**All source data is local. Do not WebFetch docs.halliday.xyz — the raw source files in `${CLAUDE_SKILL_DIR}/sources/` replace that pattern.**
+**All source data is local. Do not WebFetch docs.halliday.xyz — the raw source files in `${CLAUDE_PLUGIN_ROOT}/sources/` replace that pattern.**
 
 **Never load all source files at once. Never load openapi.json or all docs pages whole.**
 
@@ -331,7 +347,7 @@ The `api-fetch.sh` script makes authenticated calls to the Halliday REST API. It
 
 **Usage:**
 ```bash
-bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <API_KEY> <METHOD> <ENDPOINT> [QUERY_STRING] [JSON_BODY]
+${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <API_KEY> <METHOD> <ENDPOINT> [QUERY_STRING] [JSON_BODY]
 ```
 
 **Allowed endpoints:**
@@ -348,13 +364,13 @@ bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <API_KEY> <METHOD> <ENDPOINT> [QUE
 **Examples:**
 ```bash
 # Get payment status
-bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh pk_key GET /payments "payment_id=abc123"
+${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh pk_key GET /payments "payment_id=abc123"
 
 # Check OTW balances
-bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh pk_key POST /payments/balances "" '{"payment_id":"abc123"}'
+${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh pk_key POST /payments/balances "" '{"payment_id":"abc123"}'
 
 # Get chain info for explorer links
-bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh pk_key GET /chains
+${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh pk_key GET /chains
 ```
 
 The response includes the JSON body followed by the HTTP status code on the last line.

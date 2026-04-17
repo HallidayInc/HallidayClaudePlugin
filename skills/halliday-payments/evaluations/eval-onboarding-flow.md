@@ -23,6 +23,6 @@ User invokes `/halliday`, selects "Clone and run a sample application", and does
 - Should NOT block the developer from exploring or cloning without an API key
 - Should NOT skip the onboarding check and go straight to the menu
 - Should NOT fabricate an API key or suggest a placeholder key will work
-- Should NOT WebFetch any external docs — all source data is local in `${CLAUDE_SKILL_DIR}/sources/`
-- Should NOT use raw `git clone` — must use `bash scripts/git-fetch.sh {REPO}` for cloning
+- Should NOT WebFetch any external docs — all source data is local in `${CLAUDE_PLUGIN_ROOT}/sources/`
+- Should NOT use raw `git clone` — must use `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/git-fetch.sh {REPO}` for cloning
 - Should NOT load all reference files at once

@@ -12,7 +12,7 @@
 4. Claude checks if the developer has already provided a Halliday API key (from onboarding). If not, asks for one via AskUserQuestion.
 5. Claude calls `api-fetch.sh` to fetch payment status:
    ```
-   bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <API_KEY> GET /payments "payment_id=pay_abc123"
+   ${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <API_KEY> GET /payments "payment_id=pay_abc123"
    ```
 6. Claude parses the response and **presents a clear summary first**:
    - Payment ID, status, funded flag

@@ -15,16 +15,16 @@ Use `api-fetch.sh` for all API calls:
 
 ```bash
 # Get payment status
-bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <API_KEY> GET /payments "payment_id=<PAYMENT_ID>"
+${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <API_KEY> GET /payments "payment_id=<PAYMENT_ID>"
 
 # Check OTW balances (for recovery diagnosis)
-bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <API_KEY> POST /payments/balances "" '{"payment_id":"<PAYMENT_ID>"}'
+${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <API_KEY> POST /payments/balances "" '{"payment_id":"<PAYMENT_ID>"}'
 
 # Get chain info (for block explorer links)
-bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <API_KEY> GET /chains
+${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <API_KEY> GET /chains
 
 # Get payment history for an owner
-bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <API_KEY> GET /payments/history "owner_address=<OWNER_ADDRESS>&limit=10"
+${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <API_KEY> GET /payments/history "owner_address=<OWNER_ADDRESS>&limit=10"
 ```
 
 The response includes the JSON body followed by the HTTP status code on the last line. Parse accordingly.

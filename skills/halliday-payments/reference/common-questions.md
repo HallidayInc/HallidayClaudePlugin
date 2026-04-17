@@ -17,13 +17,13 @@ Yes. React Native apps can use the SDK widget. Native mobile apps (Swift/Kotlin)
 ## API and Data
 
 **"Which chains are supported?"**
-Query the API live: `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /chains`. This returns the current list of supported chains with chain IDs, explorer URLs, and native currency info. Present the results in a readable format.
+Query the API live: `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <KEY> GET /chains`. This returns the current list of supported chains with chain IDs, explorer URLs, and native currency info. Present the results in a readable format.
 
 **"Which assets/tokens are supported?"**
-Query the API live: `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /assets`. This returns all supported assets (fiat and crypto) with metadata. Summarize by chain for readability.
+Query the API live: `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <KEY> GET /assets`. This returns all supported assets (fiat and crypto) with metadata. Summarize by chain for readability.
 
 **"Can I convert X to Y?" / "Is this route available?"**
-Query the API live: `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /assets/available-outputs "inputs[]=<INPUT>&outputs[]=<OUTPUT>"`. If the output asset appears in the response, the route is supported. An empty `{}` response means the route is not currently available.
+Query the API live: `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <KEY> GET /assets/available-outputs "inputs[]=<INPUT>&outputs[]=<OUTPUT>"`. If the output asset appears in the response, the route is supported. An empty `{}` response means the route is not currently available.
 
 **"How do I handle webhooks?"**
 Webhook support is coming soon. Currently, use polling or the SDK's built-in state management to track transaction status.

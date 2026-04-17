@@ -21,7 +21,7 @@ The Halliday API uses REST endpoints to manage payment sessions. The core flow i
 ## API Specification
 
 For endpoint details, request/response schemas, and authentication:
-Use `Grep` on `${CLAUDE_SKILL_DIR}/sources/api/openapi.json` to find the relevant endpoint or schema, then `Read` only the matching lines (±50 lines of context). **Do not load the file whole.**
+Use `Grep` on `${CLAUDE_PLUGIN_ROOT}/sources/api/openapi.json` to find the relevant endpoint or schema, then `Read` only the matching lines (±50 lines of context). **Do not load the file whole.**
 
 ## Key Concepts
 
@@ -35,9 +35,9 @@ All API requests require a Halliday API key. Create a free account at https://da
 ## Supported Chains and Assets
 
 These change frequently. Query the API for live data:
-- Supported chains: `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /chains`
-- Supported assets: `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /assets`
-- Check a specific route: `bash ${CLAUDE_SKILL_DIR}/scripts/api-fetch.sh <KEY> GET /assets/available-outputs "inputs[]=<INPUT>&outputs[]=<OUTPUT>"`
+- Supported chains: `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <KEY> GET /chains`
+- Supported assets: `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <KEY> GET /assets`
+- Check a specific route: `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <KEY> GET /assets/available-outputs "inputs[]=<INPUT>&outputs[]=<OUTPUT>"`
 
 ## Example Repositories
 
@@ -55,7 +55,7 @@ web_fetch https://raw.githubusercontent.com/HallidayInc/{REPO_NAME}/main/README.
 
 ## When to Use the OpenAPI Spec
 
-Grep `${CLAUDE_SKILL_DIR}/sources/api/openapi.json` when:
+Grep `${CLAUDE_PLUGIN_ROOT}/sources/api/openapi.json` when:
 - The developer needs exact endpoint paths, parameters, or response shapes
 - You need to construct an API request and must verify the schema
 - The developer asks about specific API capabilities not covered here
