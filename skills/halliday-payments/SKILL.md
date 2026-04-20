@@ -11,7 +11,7 @@ when_to_use: |
   halliday integration check, or halliday payment debug.
 user-invocable: true
 argument-hint: "[question]"
-allowed-tools: Read, Grep, Glob, AskUserQuestion, WebFetch(domain:raw.githubusercontent.com), Bash(*/skills/halliday-payments/scripts/api-fetch.sh:*), Bash(*/skills/halliday-payments/scripts/git-fetch.sh:*)
+allowed-tools: Read, Grep, Glob, AskUserQuestion, WebFetch(domain:raw.githubusercontent.com), Bash(*/skills/halliday-payments/scripts/api-fetch.sh:*), Bash(*/skills/halliday-payments/scripts/git-fetch.sh:*), Bash(*/skills/halliday-payments/scripts/open-dashboard.sh:*)
 paths:
   - "**/*halliday*"
   - "**/package.json"
@@ -28,6 +28,7 @@ paths:
 
 - [Activation modes](#activation-modes)
 - [Onboarding](#onboarding)
+- [API key step](#api-key-step)
 - [Initialization menu](#initialization-menu)
 - [Option 1: Ask questions and learn](#option-1-ask-questions-and-learn)
 - [Option 2: Clone a sample application](#option-2-clone-a-sample-application)
@@ -60,31 +61,92 @@ For full configuration options, read `${CLAUDE_PLUGIN_ROOT}/sources/sdk/index.d.
 
 This skill has three activation modes:
 
-- **`/halliday` with no arguments:** Show the [onboarding](#onboarding) check, then the [initialization menu](#initialization-menu).
+- **`/halliday` with no arguments:** Show the [onboarding](#onboarding) blurb, then the [API key step](#api-key-step), then the [initialization menu](#initialization-menu).
 - **`/halliday <question>`:** Skip the menu. Treat `$ARGUMENTS` as the developer's question and go directly to the [routing table](#option-1-ask-questions-and-learn).
 - **Auto-activated** (keyword match): Skip the menu. Go directly to the [routing table](#option-1-ask-questions-and-learn) and answer the developer's question.
 
 ## Onboarding
 
-Before starting any integration work, check whether the developer has a Halliday API key.
+Before showing the initialization menu, run the [API key step](#api-key-step) below. It's a short, always-shown prompt that lets the developer grab an API key, paste one they already have, or skip — all three paths land them at the [initialization menu](#initialization-menu).
 
-If the developer **does not have an API key** (or hasn't mentioned one):
-- Tell them: "You'll need a Halliday API key to run any integration. Create a free account at **https://dashboard.halliday.xyz/** to get one."
-- They can still explore documentation, ask questions, and clone sample apps while waiting.
+Briefly tell the developer (one short sentence is fine): "You'll need a Halliday API key to run any integration. I can open the dashboard, take a key you already have, or skip for now."
 
-If the developer **already has an API key**: proceed directly.
+## API Key Step
+
+This step always runs once at the start of `/halliday` (with no arguments). It runs **before** the [initialization menu](#initialization-menu).
+
+Ask using AskUserQuestion:
+
+**Question:** "Got a Halliday API key? Pick one:"
+
+**Header:** "API key"
+
+**Options:**
+1. **Open dashboard for new key (Recommended)** — Opens https://dashboard.halliday.xyz/ in your default browser to create a free account and generate a key
+2. **Paste an API key** — I'll capture a key you already have for use this session
+3. **Skip for now** — Continue without a key (you can grab one later)
+
+### If the user picks "Open dashboard for new key"
+
+1. Run the bundled script (no arguments — the URL is hardcoded in the script):
+
+   ```bash
+   ${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/open-dashboard.sh
+   ```
+
+   This is auto-approved by the plugin's PreToolUse hook, so the user is not prompted. The script supports macOS, Linux, and Windows. If it prints a "Please open this URL manually" message (unsupported platform or missing `xdg-open`), surface that line to the user and continue.
+
+2. Tell the user: "I've opened https://dashboard.halliday.xyz/ in your browser. Sign in or create a free account, then create an API key (it'll start with `pk_`)."
+
+3. Ask using AskUserQuestion:
+
+   **Question:** "Once you have your key, would you like to paste it or skip and continue?"
+
+   **Header:** "Have key?"
+
+   **Options:**
+   1. **Paste API key** — I'll capture it for this session
+   2. **Skip for now** — Continue to the main menu without a key
+
+   - If **"Paste API key"** → follow the [paste flow](#paste-flow) below, then proceed to the [initialization menu](#initialization-menu).
+   - If **"Skip for now"** → acknowledge briefly ("No problem — you can grab the key later"), then proceed to the [initialization menu](#initialization-menu).
+
+### If the user picks "Paste an API key"
+
+Follow the [paste flow](#paste-flow) below, then proceed to the [initialization menu](#initialization-menu).
+
+### If the user picks "Skip for now"
+
+Acknowledge briefly ("No problem — you can grab a key later when you need it"), then proceed to the [initialization menu](#initialization-menu).
+
+### Paste flow
+
+Used by both top-level "Paste an API key" and the post-dashboard "Paste API key" sub-option:
+
+1. Tell the user: "Go ahead and paste your API key in chat."
+2. Wait for their next message. Treat the entire next message as the API key (trim whitespace).
+3. Acknowledge briefly: "Got it — I'll use that key for any Halliday API calls this session."
+4. Hold the key in conversational memory for the rest of the session.
+
+**Never write the API key to disk. Never echo the full key back to the user. Never include it in any file you create.**
+
+---
 
 ## Initialization Menu
 
-When invoked via `/halliday`, ask the user what they would like to do using the AskUserQuestion tool:
+After the [API key step](#api-key-step) completes (regardless of which path the user took), ask the user what they would like to do using the AskUserQuestion tool:
 
 **Question:** "How would you like to get started with Halliday?"
 
+**Header:** "Get started"
+
 **Options:**
-1. **Ask questions and learn about Halliday** — Learn about features, integration approaches, and get implementation help
-2. **Clone and run a sample application** — Get started quickly with an open source example app
+1. **Ask questions and learn** — Learn about features, integration approaches, and get implementation help
+2. **Clone a sample app** — Get started quickly with an open source example app
 3. **Check my integration** — Review your Halliday integration for correctness and completeness
 4. **Look up a payment** — Get the status, details, and diagnosis of a payment by ID
+
+If the user picks "Look up a payment" but did not provide an API key during the API key step, ask them for one at that point (it's required for the lookup).
 
 ---
 
