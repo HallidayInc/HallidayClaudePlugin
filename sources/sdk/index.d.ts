@@ -41,30 +41,12 @@ declare const EVMChainConfig: z.ZodObject<{
 }, z.core.$strip>;
 type EVMChainConfig = z.infer<typeof EVMChainConfig>;
 
-declare const TypedData: z.ZodString;
-type TypedData = z.infer<typeof TypedData>;
-
+type TypedData = string;
 declare const WindowType: z.ZodEnum<{
-    EMBED: "EMBED";
-    POPUP: "POPUP";
     MODAL: "MODAL";
+    EMBED: "EMBED";
 }>;
 type WindowType = z.infer<typeof WindowType>;
-declare const TextMode: z.ZodEnum<{
-    DEFAULT: "DEFAULT";
-    ALL_UPPERCASE: "ALL_UPPERCASE";
-}>;
-type TextMode = z.infer<typeof TextMode>;
-declare const FontWeight: z.ZodEnum<{
-    AUTO: "AUTO";
-    MEDIUM: "MEDIUM";
-}>;
-type FontWeight = z.infer<typeof FontWeight>;
-declare const PaymentCategoryGrouping: z.ZodEnum<{
-    ATTACHED: "ATTACHED";
-    BUTTON: "BUTTON";
-}>;
-type PaymentCategoryGrouping = z.infer<typeof PaymentCategoryGrouping>;
 declare const BorderStyle: z.ZodEnum<{
     SQUARE: "SQUARE";
     DEFAULT: "DEFAULT";
@@ -84,49 +66,22 @@ declare const CustomStyles: z.ZodObject<{
     textColor: z.ZodOptional<z.ZodString>;
     textSecondaryColor: z.ZodOptional<z.ZodString>;
     accentColor: z.ZodOptional<z.ZodString>;
-    componentShadow: z.ZodOptional<z.ZodString>;
     borderStyle: z.ZodOptional<z.ZodEnum<{
         SQUARE: "SQUARE";
         DEFAULT: "DEFAULT";
     }>>;
-    textMode: z.ZodOptional<z.ZodEnum<{
-        DEFAULT: "DEFAULT";
-        ALL_UPPERCASE: "ALL_UPPERCASE";
-    }>>;
-    paymentCategoryGrouping: z.ZodOptional<z.ZodEnum<{
-        ATTACHED: "ATTACHED";
-        BUTTON: "BUTTON";
-    }>>;
-    fontWeight: z.ZodOptional<z.ZodEnum<{
-        AUTO: "AUTO";
-        MEDIUM: "MEDIUM";
-    }>>;
-    baseFontSize: z.ZodOptional<z.ZodString>;
-    baseBorderRadius: z.ZodOptional<z.ZodString>;
+    successColor: z.ZodOptional<z.ZodString>;
+    alertColor: z.ZodOptional<z.ZodString>;
+    zIndex: z.ZodOptional<z.ZodNumber>;
+    componentShadow: z.ZodOptional<z.ZodString>;
     backgroundStyle: z.ZodOptional<z.ZodEnum<{
         BLUR: "BLUR";
         OFF: "OFF";
     }>>;
-    logo: z.ZodOptional<z.ZodObject<{
-        src: z.ZodURL;
-        alt: z.ZodString;
-        width: z.ZodNumber;
-        height: z.ZodNumber;
-    }, z.core.$strip>>;
 }, z.core.$strip>;
 type CustomStyles = z.infer<typeof CustomStyles>;
 declare const OrderStatus: z.ZodAny;
 type OrderStatus = z.infer<typeof OrderStatus>;
-declare const PaymentCategoryOrder: z.ZodArray<z.ZodEnum<{
-    wallet: "wallet";
-    "open-wallet": "open-wallet";
-    exchange: "exchange";
-    "open-exchange": "open-exchange";
-    cash: "cash";
-    "open-cash": "open-cash";
-    deposit: "deposit";
-}>>;
-type PaymentCategoryOrder = z.infer<typeof PaymentCategoryOrder>;
 declare const FontName: z.ZodEnum<{
     haffer: "haffer";
     "wudoo-mono": "wudoo-mono";
@@ -155,22 +110,9 @@ type StatusCallback = (input: {
     payload: OrderStatus;
 }) => void;
 declare const PaymentsWidgetSDKParamsWithoutRolesAndFunctions: z.ZodObject<{
-    onramps: z.ZodOptional<z.ZodArray<z.ZodString>>;
-    offramps: z.ZodOptional<z.ZodArray<z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>>>;
     sandbox: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
-    features: z.ZodOptional<z.ZodArray<z.ZodEnum<{
-        BETA_EDGES: "BETA_EDGES";
-        ORG_BETA_EDGES: "ORG_BETA_EDGES";
-        ORG_EDGES: "ORG_EDGES";
-    }>>>;
-    inputs: z.ZodOptional<z.ZodArray<z.ZodUnion<readonly [z.ZodString, z.ZodString]>>>;
     outputs: z.ZodArray<z.ZodUnion<readonly [z.ZodString, z.ZodString]>>;
     apiKey: z.ZodString;
-    destinationAddress: z.ZodOptional<z.ZodString>;
-    widgetVersion: z.ZodOptional<z.ZodEnum<{
-        1: "1";
-        2: "2";
-    }>>;
     customStyles: z.ZodOptional<z.ZodObject<{
         primaryColor: z.ZodOptional<z.ZodString>;
         backgroundColor: z.ZodOptional<z.ZodString>;
@@ -178,67 +120,38 @@ declare const PaymentsWidgetSDKParamsWithoutRolesAndFunctions: z.ZodObject<{
         textColor: z.ZodOptional<z.ZodString>;
         textSecondaryColor: z.ZodOptional<z.ZodString>;
         accentColor: z.ZodOptional<z.ZodString>;
-        componentShadow: z.ZodOptional<z.ZodString>;
         borderStyle: z.ZodOptional<z.ZodEnum<{
             SQUARE: "SQUARE";
             DEFAULT: "DEFAULT";
         }>>;
-        textMode: z.ZodOptional<z.ZodEnum<{
-            DEFAULT: "DEFAULT";
-            ALL_UPPERCASE: "ALL_UPPERCASE";
-        }>>;
-        paymentCategoryGrouping: z.ZodOptional<z.ZodEnum<{
-            ATTACHED: "ATTACHED";
-            BUTTON: "BUTTON";
-        }>>;
-        fontWeight: z.ZodOptional<z.ZodEnum<{
-            AUTO: "AUTO";
-            MEDIUM: "MEDIUM";
-        }>>;
-        baseFontSize: z.ZodOptional<z.ZodString>;
-        baseBorderRadius: z.ZodOptional<z.ZodString>;
+        successColor: z.ZodOptional<z.ZodString>;
+        alertColor: z.ZodOptional<z.ZodString>;
+        zIndex: z.ZodOptional<z.ZodNumber>;
+        componentShadow: z.ZodOptional<z.ZodString>;
         backgroundStyle: z.ZodOptional<z.ZodEnum<{
             BLUR: "BLUR";
             OFF: "OFF";
         }>>;
-        logo: z.ZodOptional<z.ZodObject<{
-            src: z.ZodURL;
-            alt: z.ZodString;
-            width: z.ZodNumber;
-            height: z.ZodNumber;
-        }, z.core.$strip>>;
     }, z.core.$strip>>;
     targetElementId: z.ZodOptional<z.ZodString>;
-    windowType: z.ZodOptional<z.ZodEnum<{
-        EMBED: "EMBED";
-        POPUP: "POPUP";
-        MODAL: "MODAL";
-    }>>;
-    redirects: z.ZodOptional<z.ZodObject<{
-        redirectUrl: z.ZodURL;
-        ctaText: z.ZodString;
-        secondaryRedirectUrl: z.ZodOptional<z.ZodURL>;
-        secondaryCtaText: z.ZodOptional<z.ZodString>;
-    }, z.core.$strip>>;
-    paymentCategoryOrder: z.ZodOptional<z.ZodArray<z.ZodEnum<{
-        wallet: "wallet";
-        "open-wallet": "open-wallet";
-        exchange: "exchange";
-        "open-exchange": "open-exchange";
-        cash: "cash";
-        "open-cash": "open-cash";
-        deposit: "deposit";
-    }>>>;
     fontName: z.ZodOptional<z.ZodEnum<{
         haffer: "haffer";
         "wudoo-mono": "wudoo-mono";
         inter: "inter";
     }>>;
     headerTitle: z.ZodOptional<z.ZodOptional<z.ZodString>>;
-    showSkeleton: z.ZodOptional<z.ZodBoolean>;
-    skeletonBackgroundColor: z.ZodOptional<z.ZodString>;
+    userWalletFunderDisplay: z.ZodOptional<z.ZodEnum<{
+        SHOW: "SHOW";
+        HIDE: "HIDE";
+    }>>;
+    destinationAddress: z.ZodOptional<z.ZodString>;
+    onReady: z.ZodOptional<z.ZodAny>;
+    onError: z.ZodOptional<z.ZodAny>;
 }, z.core.$strip>;
 declare const PaymentsWidgetSDKParams: z.ZodObject<{
+    apiKey: z.ZodString;
+    outputs: z.ZodArray<z.ZodUnion<readonly [z.ZodString, z.ZodString]>>;
+    sandbox: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
     customStyles: z.ZodOptional<z.ZodObject<{
         primaryColor: z.ZodOptional<z.ZodString>;
         backgroundColor: z.ZodOptional<z.ZodString>;
@@ -246,48 +159,30 @@ declare const PaymentsWidgetSDKParams: z.ZodObject<{
         textColor: z.ZodOptional<z.ZodString>;
         textSecondaryColor: z.ZodOptional<z.ZodString>;
         accentColor: z.ZodOptional<z.ZodString>;
-        componentShadow: z.ZodOptional<z.ZodString>;
         borderStyle: z.ZodOptional<z.ZodEnum<{
             SQUARE: "SQUARE";
             DEFAULT: "DEFAULT";
         }>>;
-        textMode: z.ZodOptional<z.ZodEnum<{
-            DEFAULT: "DEFAULT";
-            ALL_UPPERCASE: "ALL_UPPERCASE";
-        }>>;
-        paymentCategoryGrouping: z.ZodOptional<z.ZodEnum<{
-            ATTACHED: "ATTACHED";
-            BUTTON: "BUTTON";
-        }>>;
-        fontWeight: z.ZodOptional<z.ZodEnum<{
-            AUTO: "AUTO";
-            MEDIUM: "MEDIUM";
-        }>>;
-        baseFontSize: z.ZodOptional<z.ZodString>;
-        baseBorderRadius: z.ZodOptional<z.ZodString>;
+        successColor: z.ZodOptional<z.ZodString>;
+        alertColor: z.ZodOptional<z.ZodString>;
+        zIndex: z.ZodOptional<z.ZodNumber>;
+        componentShadow: z.ZodOptional<z.ZodString>;
         backgroundStyle: z.ZodOptional<z.ZodEnum<{
             BLUR: "BLUR";
             OFF: "OFF";
         }>>;
-        logo: z.ZodOptional<z.ZodObject<{
-            src: z.ZodURL;
-            alt: z.ZodString;
-            width: z.ZodNumber;
-            height: z.ZodNumber;
-        }, z.core.$strip>>;
     }, z.core.$strip>>;
     targetElementId: z.ZodOptional<z.ZodString>;
-    windowType: z.ZodOptional<z.ZodEnum<{
-        EMBED: "EMBED";
-        POPUP: "POPUP";
-        MODAL: "MODAL";
+    fontName: z.ZodOptional<z.ZodEnum<{
+        haffer: "haffer";
+        "wudoo-mono": "wudoo-mono";
+        inter: "inter";
     }>>;
-    redirects: z.ZodOptional<z.ZodObject<{
-        redirectUrl: z.ZodURL;
-        ctaText: z.ZodString;
-        secondaryRedirectUrl: z.ZodOptional<z.ZodURL>;
-        secondaryCtaText: z.ZodOptional<z.ZodString>;
-    }, z.core.$strip>>;
+    headerTitle: z.ZodOptional<z.ZodOptional<z.ZodString>>;
+    userWalletFunderDisplay: z.ZodOptional<z.ZodEnum<{
+        SHOW: "SHOW";
+        HIDE: "HIDE";
+    }>>;
     statusCallback: z.ZodOptional<z.ZodAny>;
     owner: z.ZodOptional<z.ZodObject<{
         address: z.ZodString;
@@ -301,39 +196,16 @@ declare const PaymentsWidgetSDKParams: z.ZodObject<{
         sendTransaction: z.ZodOptional<z.ZodAny>;
         signTypedData: z.ZodOptional<z.ZodAny>;
     }, z.core.$strip>>;
-    features: z.ZodOptional<z.ZodArray<z.ZodEnum<{
-        BETA_EDGES: "BETA_EDGES";
-        ORG_BETA_EDGES: "ORG_BETA_EDGES";
-        ORG_EDGES: "ORG_EDGES";
-    }>>>;
-    paymentCategoryOrder: z.ZodOptional<z.ZodArray<z.ZodEnum<{
-        wallet: "wallet";
-        "open-wallet": "open-wallet";
-        exchange: "exchange";
-        "open-exchange": "open-exchange";
-        cash: "cash";
-        "open-cash": "open-cash";
-        deposit: "deposit";
-    }>>>;
-    fontName: z.ZodOptional<z.ZodEnum<{
-        haffer: "haffer";
-        "wudoo-mono": "wudoo-mono";
-        inter: "inter";
-    }>>;
-    headerTitle: z.ZodOptional<z.ZodOptional<z.ZodString>>;
-    onramps: z.ZodOptional<z.ZodArray<z.ZodString>>;
-    showSkeleton: z.ZodOptional<z.ZodBoolean>;
-    skeletonBackgroundColor: z.ZodOptional<z.ZodString>;
-    offramps: z.ZodOptional<z.ZodArray<z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>>>;
-    sandbox: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
-    inputs: z.ZodOptional<z.ZodArray<z.ZodUnion<readonly [z.ZodString, z.ZodString]>>>;
-    outputs: z.ZodArray<z.ZodUnion<readonly [z.ZodString, z.ZodString]>>;
-    apiKey: z.ZodString;
+    userWallet: z.ZodOptional<z.ZodObject<{
+        address: z.ZodString;
+        signMessage: z.ZodOptional<z.ZodAny>;
+        sendTransaction: z.ZodOptional<z.ZodAny>;
+        signTypedData: z.ZodOptional<z.ZodAny>;
+        connect: z.ZodOptional<z.ZodAny>;
+    }, z.core.$strip>>;
     destinationAddress: z.ZodOptional<z.ZodString>;
-    widgetVersion: z.ZodOptional<z.ZodEnum<{
-        1: "1";
-        2: "2";
-    }>>;
+    onReady: z.ZodOptional<z.ZodAny>;
+    onError: z.ZodOptional<z.ZodAny>;
 }, z.core.$strip>;
 type PaymentsWidgetSDKParams = z.input<typeof PaymentsWidgetSDKParamsWithoutRolesAndFunctions> & {
     owner?: Omit<WalletActionsType, "getAddress"> & {
@@ -342,46 +214,49 @@ type PaymentsWidgetSDKParams = z.input<typeof PaymentsWidgetSDKParamsWithoutRole
     funder?: Omit<WalletActionsType, "getAddress"> & {
         address: Address;
     };
+    userWallet: Omit<WalletActionsType, "getAddress"> & {
+        address: Address;
+        connect?: () => void;
+    };
     statusCallback?: StatusCallback;
+    onReady?: () => void;
+    onError?: (error: Error) => void;
 };
 declare const AppMode: z.ZodEnum<{
-    EMBED: "EMBED";
-    MODAL: "MODAL";
     FULL: "FULL";
+    MODAL: "MODAL";
     OVERLAY: "OVERLAY";
+    EMBED: "EMBED";
 }>;
 type AppMode = z.infer<typeof AppMode>;
 declare const PaymentsWidgetQueryParams: z.ZodObject<{
-    ownerAddress: z.ZodOptional<z.ZodString>;
-    funderAddress: z.ZodOptional<z.ZodString>;
     appMode: z.ZodOptional<z.ZodEnum<{
-        EMBED: "EMBED";
-        MODAL: "MODAL";
         FULL: "FULL";
+        MODAL: "MODAL";
         OVERLAY: "OVERLAY";
+        EMBED: "EMBED";
     }>>;
     apiBaseUrl: z.ZodOptional<z.ZodString>;
     hasOwner: z.ZodBoolean;
     hasTxHandler: z.ZodBoolean;
+    hasConnect: z.ZodBoolean;
     hostOrigin: z.ZodNullable<z.ZodURL>;
     ipAddress: z.ZodOptional<z.ZodUnion<readonly [z.ZodIPv4, z.ZodIPv6]>>;
     featureFlags: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodBoolean>>;
+    ownerAddress: z.ZodOptional<z.ZodString>;
+    funderAddress: z.ZodOptional<z.ZodString>;
     onramps: z.ZodOptional<z.ZodArray<z.ZodString>>;
-    offramps: z.ZodOptional<z.ZodArray<z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>>>;
-    sandbox: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
+    offramps: z.ZodOptional<z.ZodArray<z.ZodString>>;
+    inputs: z.ZodOptional<z.ZodArray<z.ZodUnion<readonly [z.ZodString, z.ZodString]>>>;
     features: z.ZodOptional<z.ZodArray<z.ZodEnum<{
         BETA_EDGES: "BETA_EDGES";
         ORG_BETA_EDGES: "ORG_BETA_EDGES";
         ORG_EDGES: "ORG_EDGES";
     }>>>;
-    inputs: z.ZodOptional<z.ZodArray<z.ZodUnion<readonly [z.ZodString, z.ZodString]>>>;
+    hops: z.ZodOptional<z.ZodArray<z.ZodString>>;
+    sandbox: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
     outputs: z.ZodArray<z.ZodUnion<readonly [z.ZodString, z.ZodString]>>;
     apiKey: z.ZodString;
-    destinationAddress: z.ZodOptional<z.ZodString>;
-    widgetVersion: z.ZodOptional<z.ZodEnum<{
-        1: "1";
-        2: "2";
-    }>>;
     customStyles: z.ZodOptional<z.ZodObject<{
         primaryColor: z.ZodOptional<z.ZodString>;
         backgroundColor: z.ZodOptional<z.ZodString>;
@@ -389,65 +264,33 @@ declare const PaymentsWidgetQueryParams: z.ZodObject<{
         textColor: z.ZodOptional<z.ZodString>;
         textSecondaryColor: z.ZodOptional<z.ZodString>;
         accentColor: z.ZodOptional<z.ZodString>;
-        componentShadow: z.ZodOptional<z.ZodString>;
         borderStyle: z.ZodOptional<z.ZodEnum<{
             SQUARE: "SQUARE";
             DEFAULT: "DEFAULT";
         }>>;
-        textMode: z.ZodOptional<z.ZodEnum<{
-            DEFAULT: "DEFAULT";
-            ALL_UPPERCASE: "ALL_UPPERCASE";
-        }>>;
-        paymentCategoryGrouping: z.ZodOptional<z.ZodEnum<{
-            ATTACHED: "ATTACHED";
-            BUTTON: "BUTTON";
-        }>>;
-        fontWeight: z.ZodOptional<z.ZodEnum<{
-            AUTO: "AUTO";
-            MEDIUM: "MEDIUM";
-        }>>;
-        baseFontSize: z.ZodOptional<z.ZodString>;
-        baseBorderRadius: z.ZodOptional<z.ZodString>;
+        successColor: z.ZodOptional<z.ZodString>;
+        alertColor: z.ZodOptional<z.ZodString>;
+        zIndex: z.ZodOptional<z.ZodNumber>;
+        componentShadow: z.ZodOptional<z.ZodString>;
         backgroundStyle: z.ZodOptional<z.ZodEnum<{
             BLUR: "BLUR";
             OFF: "OFF";
         }>>;
-        logo: z.ZodOptional<z.ZodObject<{
-            src: z.ZodURL;
-            alt: z.ZodString;
-            width: z.ZodNumber;
-            height: z.ZodNumber;
-        }, z.core.$strip>>;
     }, z.core.$strip>>;
     targetElementId: z.ZodOptional<z.ZodString>;
-    windowType: z.ZodOptional<z.ZodEnum<{
-        EMBED: "EMBED";
-        POPUP: "POPUP";
-        MODAL: "MODAL";
-    }>>;
-    redirects: z.ZodOptional<z.ZodObject<{
-        redirectUrl: z.ZodURL;
-        ctaText: z.ZodString;
-        secondaryRedirectUrl: z.ZodOptional<z.ZodURL>;
-        secondaryCtaText: z.ZodOptional<z.ZodString>;
-    }, z.core.$strip>>;
-    paymentCategoryOrder: z.ZodOptional<z.ZodArray<z.ZodEnum<{
-        wallet: "wallet";
-        "open-wallet": "open-wallet";
-        exchange: "exchange";
-        "open-exchange": "open-exchange";
-        cash: "cash";
-        "open-cash": "open-cash";
-        deposit: "deposit";
-    }>>>;
     fontName: z.ZodOptional<z.ZodEnum<{
         haffer: "haffer";
         "wudoo-mono": "wudoo-mono";
         inter: "inter";
     }>>;
     headerTitle: z.ZodOptional<z.ZodOptional<z.ZodString>>;
-    showSkeleton: z.ZodOptional<z.ZodBoolean>;
-    skeletonBackgroundColor: z.ZodOptional<z.ZodString>;
+    userWalletFunderDisplay: z.ZodOptional<z.ZodEnum<{
+        SHOW: "SHOW";
+        HIDE: "HIDE";
+    }>>;
+    destinationAddress: z.ZodOptional<z.ZodString>;
+    onReady: z.ZodOptional<z.ZodAny>;
+    onError: z.ZodOptional<z.ZodAny>;
 }, z.core.$strip>;
 type PaymentsWidgetQueryParams = z.infer<typeof PaymentsWidgetQueryParams>;
 declare enum MessageType {
@@ -457,6 +300,7 @@ declare enum MessageType {
     ACTION_SIGN_MESSAGE = "ACTION_SIGN_MESSAGE",
     ACTION_PROVIDER_WIDGET = "ACTION_PROVIDER_WIDGET",
     ACTION_SIGN_TYPED_DATA = "ACTION_SIGN_TYPED_DATA",
+    ACTION_TRIGGER_CONNECT = "ACTION_TRIGGER_CONNECT",
     EVENT_RESIZE = "EVENT_RESIZE"
 }
 type Message = {
@@ -471,6 +315,9 @@ type Message = {
     payload: OrderStatus;
 } | {
     type: MessageType.EVENT_WINDOW_CLOSE;
+    payload: undefined;
+} | {
+    type: MessageType.ACTION_TRIGGER_CONNECT;
     payload: undefined;
 } | {
     type: MessageType.ACTION_SIGN_MESSAGE;
@@ -535,53 +382,40 @@ type MessageResponse = {
         error: string;
     };
 };
-/**
- * Configuration for initializeClient.
- *
- * This is intentionally minimal - init is just for preloading.
- * All business logic params (outputs, customStyles, etc.) go in openHallidayPayments.
- */
-declare const InitConfig: z.ZodObject<{
-    apiKey: z.ZodString;
-    sandbox: z.ZodOptional<z.ZodBoolean>;
-    onReady: z.ZodOptional<z.ZodAny>;
-    onError: z.ZodOptional<z.ZodAny>;
-}, z.core.$strip>;
-type InitConfig = z.input<typeof InitConfig> & {
-    onReady?: () => void;
-    onError?: (error: Error) => void;
+declare enum WidgetLoadFailureReason {
+    /** Host page's Content-Security-Policy blocked the iframe src */
+    CSP_BLOCKED = "CSP_BLOCKED",
+    /** Network failure: DNS, firewall, proxy, or server unreachable */
+    NETWORK_FAILURE = "NETWORK_FAILURE",
+    /** The iframe element was removed from the DOM by external code */
+    IFRAME_REMOVED = "IFRAME_REMOVED",
+    /** A browser extension or privacy tool blocked the request */
+    RESOURCE_BLOCKED = "RESOURCE_BLOCKED",
+    /** Unable to determine the specific failure reason */
+    UNKNOWN = "UNKNOWN"
+}
+type WidgetLoadDiagnostics = {
+    onloadFired: boolean;
+    cspViolationDetected: boolean;
+    cspBlockedURI: string | null;
+    iframeInDOM: boolean;
+    resourceTimingEntryExists: boolean;
+    elapsedMs: number;
 };
+declare class WidgetLoadError extends Error {
+    name: "WidgetLoadError";
+    readonly reason: WidgetLoadFailureReason;
+    readonly diagnostics: WidgetLoadDiagnostics;
+    constructor(message: string, reason: WidgetLoadFailureReason, diagnostics: WidgetLoadDiagnostics);
+    static isWidgetLoadError(error: unknown): error is WidgetLoadError;
+}
 
 /**
  * Opens the Halliday Payments widget.
  *
- * This function initializes and opens the payment widget window in a popup or embedded mode.
- *
- * @param {PaymentsWidgetSDKParams} params The configurations for the payments widget, which includes:
- *
- * @param {!string} params.apiKey {string} Your API key for authorization.
- * @param {boolean=} params.sandbox {boolean} (optional) Whether the widget is in sandbox mode.
- * @param {string=} params.destinationAddress {string} (optional) The address of the destination of the widget.
- *
- * @param {Asset[]=} params.inputs {{@link Asset}[]} (optional) The input assets for the widget.
- * @param {Asset[]=} params.outputs {{@link Asset}[]} (optional) The output assets for the widget.
- * @param {string[]=} params.onramps {string[]} (optional) Array of onramp provider names to filter/display in the widget.
- * @param {RampName[]=} params.onramps {{@link RampName}[]} (optional) The onramps for the widget.
- * @param {RampName[]=} params.offramps {{@link RampName}[]} (optional) The offramps for the widget.
- *
- * @param {CustomStyles=} params.customStyles {{@link CustomStyles}} (optional) A list of custom styles to show in the widget.
- * @param {string=} params.targetElementId {string} (required if windowType is "EMBED") The ID of the DOM element where the widget should be embedded.
- * @param {("POPUP" | "EMBED")=} params.windowType {"POPUP" | "EMBED"} The desired display mode of the widget.
- *
- * @param {Role=} params.owner {{@link Role}} (optional) The owner that would have full access to payments workflow.
- * @param {Role=} params.funder {{@link Role}} (optional) The funder that initiates the funding.
- * @param {PaymentCategoryOrder=} params.paymentCategoryOrder {{@link PaymentCategoryOrder}} (optional) On the quote page, these are three displayed paymentcategories (empty or three elements).
- * @param {FontName=} params.fontName {{@link FontName}} (optional) The font name to use in the widget (haffer or wudoo-mono or inter). Defaults to haffer.
- * @param {HeaderTitle=} params.headerTitle {{@link HeaderTitle}} (optional) The header title to use in the widget (Buy or string). Defaults to Buy.
- *
- * @param {StatusCallback=} params.statusCallback {{@link StatusCallback}} (optional) Callback to receive status events.
+ * @param {PaymentsWidgetSDKParams} params The configurations for the payments widget
  */
-declare function openHallidayPayments(params: PaymentsWidgetSDKParams, ...args: any[]): Promise<void>;
+declare function openHallidayPayments(params: PaymentsWidgetSDKParams, ...args: any[]): void;
 
 /**
  * Serialize the query params to a base64 string.
@@ -613,14 +447,14 @@ declare const getPaymentsWidgetUrl: (params: PaymentsWidgetQueryParams & {
  * This loads the widget in a hidden iframe so that when you call
  * `openHallidayPayments()`, it appears instantly - no loading, no delay.
  *
- * @param config Configuration with apiKey and optional callbacks
- * @returns Promise that resolves when widget is fully loaded and ready
+ * @param params Configuration with apiKey, optional callbacks (onReady, onError), and any business params
  *
  * @example
  * ```javascript
  * // Initialize early in your app
- * await initializeClient({
+ * initializeClient({
  *   apiKey: 'your-api-key',
+ *   outputs: ['ethereum:usdc'],
  *   onReady: () => console.log('Widget fully loaded!'),
  *   onError: (err) => console.error('Failed to load:', err),
  * });
@@ -633,12 +467,14 @@ declare const getPaymentsWidgetUrl: (params: PaymentsWidgetQueryParams & {
  * });
  * ```
  */
-declare const initializeClient: (config: InitConfig, ...args: any[]) => Promise<void>;
+declare const initializeClient: (params: PaymentsWidgetSDKParams, ...args: any[]) => void;
 /**
  * Destroy the preloaded widget and reset state.
  * Call this when you need to re-initialize with different settings.
  */
 declare const destroyClient: () => void;
 
-export { AppMode, BackgroundStyle, BorderStyle, CssFontSize, CustomStyles, FontName, FontWeight, HeaderTitle, InitConfig, MessageType, OrderStatus, PaymentCategoryGrouping, PaymentCategoryOrder, PaymentsWidgetQueryParams, PaymentsWidgetSDKParams, TextMode, WindowType, deserializeQueryParams, destroyClient, getPaymentsWidgetUrl, initializeClient, openHallidayPayments, serializeQueryParams };
-export type { Message, MessageResponse };
+declare function openActivity(): void;
+
+export { AppMode, BackgroundStyle, BorderStyle, CssFontSize, CustomStyles, FontName, HeaderTitle, MessageType, OrderStatus, PaymentsWidgetQueryParams, PaymentsWidgetSDKParams, WidgetLoadError, WidgetLoadFailureReason, WindowType, deserializeQueryParams, destroyClient, getPaymentsWidgetUrl, initializeClient, openActivity, openHallidayPayments, serializeQueryParams };
+export type { Message, MessageResponse, WidgetLoadDiagnostics };

@@ -30,7 +30,7 @@ Use `Grep` on `${CLAUDE_PLUGIN_ROOT}/sources/api/openapi.json` to find the relev
 
 ## Authentication
 
-All API requests require a Halliday API key. Create a free account at https://dashboard.halliday.xyz/ to get one.
+All API requests require a Halliday public API key. Create a free account at https://dashboard.halliday.xyz/ to get one.
 
 ## Supported Chains and Assets
 

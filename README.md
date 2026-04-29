@@ -35,9 +35,9 @@ claude plugin marketplace add HallidayInc/HallidayClaudePlugin && claude plugin 
 - "Check my Halliday integration"
 - "Look up payment `abc-123-def` — what's its status?"
 
-## API Key
+## Public API Key
 
-You'll need a Halliday API key to run any integration. Go to https://dashboard.halliday.xyz/ to get a free API key.
+You'll need a Halliday public API key to run any integration. Go to https://dashboard.halliday.xyz/ to get a free public API key.
 
 ## Partnerships
 

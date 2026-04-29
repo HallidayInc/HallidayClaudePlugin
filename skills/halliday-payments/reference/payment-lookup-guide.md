@@ -5,7 +5,7 @@ Use this guide to look up a Halliday payment by ID, interpret its state, and pro
 ## Prerequisites
 
 To look up a payment, you need:
-- **API key** — the developer's Halliday API key (`pk_...`). They may have already provided this during onboarding.
+- **Public API key** — the developer's Halliday public API key (`pk_...`). They may have already provided this during onboarding.
 - **Payment ID** — UUID string (e.g. `41b16a6f-704e-44ba-9964-2b66df8a73e8`)
 - **Owner address** — needed only for `/payments/history` lookups, not for single payment status
 

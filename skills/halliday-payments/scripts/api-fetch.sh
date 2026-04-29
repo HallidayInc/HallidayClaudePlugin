@@ -20,7 +20,7 @@ usage() {
   echo "Usage: api-fetch.sh <API_KEY> <METHOD> <ENDPOINT> [QUERY_STRING] [JSON_BODY]"
   echo ""
   echo "Arguments:"
-  echo "  API_KEY       Halliday API key (pk_...)"
+  echo "  API_KEY       Halliday public API key (pk_...)"
   echo "  METHOD        HTTP method (GET or POST)"
   echo "  ENDPOINT      API endpoint path (e.g. /payments)"
   echo "  QUERY_STRING  Query string for GET requests (e.g. payment_id=abc123)"

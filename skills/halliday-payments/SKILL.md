@@ -49,7 +49,7 @@ npm install @halliday-sdk/payments
 import { openHallidayPayments } from "@halliday-sdk/payments";
 
 openHallidayPayments({
-  apiKey: "YOUR_API_KEY", // Free at https://dashboard.halliday.xyz/
+  apiKey: "YOUR_PUBLIC_API_KEY", // Free at https://dashboard.halliday.xyz/
 });
 ```
 
@@ -67,9 +67,9 @@ This skill has three activation modes:
 
 ## Onboarding
 
-Before showing the initialization menu, run the [API key step](#api-key-step) below. It's a short, always-shown prompt that lets the developer grab an API key, paste one they already have, or skip — all three paths land them at the [initialization menu](#initialization-menu).
+Before showing the initialization menu, run the [API key step](#api-key-step) below. It's a short, always-shown prompt that lets the developer grab a public API key, paste one they already have, or skip — all three paths land them at the [initialization menu](#initialization-menu).
 
-Briefly tell the developer (one short sentence is fine): "You'll need a Halliday API key to run any integration. I can open the dashboard, take a key you already have, or skip for now."
+Briefly tell the developer (one short sentence is fine): "You'll need a Halliday public API key to run any integration. I can open the dashboard, take a key you already have, or skip for now."
 
 ## API Key Step
 
@@ -77,13 +77,13 @@ This step always runs once at the start of `/halliday` (with no arguments). It r
 
 Ask using AskUserQuestion:
 
-**Question:** "Got a Halliday API key? Pick one:"
+**Question:** "Got a Halliday public API key? Pick one:"
 
-**Header:** "API key"
+**Header:** "Public key"
 
 **Options:**
-1. **Open dashboard for new key (Recommended)** — Opens https://dashboard.halliday.xyz/ in your default browser to create a free account and generate a key
-2. **Paste an API key** — I'll capture a key you already have for use this session
+1. **Open dashboard for new key (Recommended)** — Opens https://dashboard.halliday.xyz/ in your default browser to create a free account and generate a public API key
+2. **Paste a public API key** — I'll capture a key you already have for use this session
 3. **Skip for now** — Continue without a key (you can grab one later)
 
 ### If the user picks "Open dashboard for new key"
@@ -96,22 +96,22 @@ Ask using AskUserQuestion:
 
    This is auto-approved by the plugin's PreToolUse hook, so the user is not prompted. The script supports macOS, Linux, and Windows. If it prints a "Please open this URL manually" message (unsupported platform or missing `xdg-open`), surface that line to the user and continue.
 
-2. Tell the user: "I've opened https://dashboard.halliday.xyz/ in your browser. Sign in or create a free account, then create an API key (it'll start with `pk_`)."
+2. Tell the user: "I've opened https://dashboard.halliday.xyz/ in your browser. Sign in or create a free account, then create a public API key (it'll start with `pk_`)."
 
 3. Ask using AskUserQuestion:
 
-   **Question:** "Once you have your key, would you like to paste it or skip and continue?"
+   **Question:** "Once you have your public API key, would you like to paste it or skip and continue?"
 
    **Header:** "Have key?"
 
    **Options:**
-   1. **Paste API key** — I'll capture it for this session
+   1. **Paste public API key** — I'll capture it for this session
    2. **Skip for now** — Continue to the main menu without a key
 
-   - If **"Paste API key"** → follow the [paste flow](#paste-flow) below, then proceed to the [initialization menu](#initialization-menu).
+   - If **"Paste public API key"** → follow the [paste flow](#paste-flow) below, then proceed to the [initialization menu](#initialization-menu).
    - If **"Skip for now"** → acknowledge briefly ("No problem — you can grab the key later"), then proceed to the [initialization menu](#initialization-menu).
 
-### If the user picks "Paste an API key"
+### If the user picks "Paste a public API key"
 
 Follow the [paste flow](#paste-flow) below, then proceed to the [initialization menu](#initialization-menu).
 
@@ -121,14 +121,14 @@ Acknowledge briefly ("No problem — you can grab a key later when you need it")
 
 ### Paste flow
 
-Used by both top-level "Paste an API key" and the post-dashboard "Paste API key" sub-option:
+Used by both top-level "Paste a public API key" and the post-dashboard "Paste public API key" sub-option:
 
-1. Tell the user: "Go ahead and paste your API key in chat."
-2. Wait for their next message. Treat the entire next message as the API key (trim whitespace).
+1. Tell the user: "Go ahead and paste your public API key in chat."
+2. Wait for their next message. Treat the entire next message as the public API key (trim whitespace).
 3. Acknowledge briefly: "Got it — I'll use that key for any Halliday API calls this session."
 4. Hold the key in conversational memory for the rest of the session.
 
-**Never write the API key to disk. Never echo the full key back to the user. Never include it in any file you create.**
+**Never write the public API key to disk. Never echo the full key back to the user. Never include it in any file you create.**
 
 ---
 
@@ -146,7 +146,7 @@ After the [API key step](#api-key-step) completes (regardless of which path the 
 3. **Check my integration** — Review your Halliday integration for correctness and completeness
 4. **Look up a payment** — Get the status, details, and diagnosis of a payment by ID
 
-If the user picks "Look up a payment" but did not provide an API key during the API key step, ask them for one at that point (it's required for the lookup).
+If the user picks "Look up a payment" but did not provide a public API key during the API key step, ask them for one at that point (it's required for the lookup).
 
 ---
 
@@ -172,7 +172,7 @@ If the user selects "Ask questions and learn about Halliday" (or if auto-activat
 
 4. **Use raw source files for additional detail** — see [Using raw source files](#using-raw-source-files-context-safe) below.
 
-5. **Use the Halliday API for live chain, asset, and route data.** When the developer asks about supported chains, supported tokens/assets, or whether a specific input-to-output route is available, query the API instead of pointing them to the OpenAPI spec. This requires their API key — check if they provided one during onboarding, otherwise ask for it.
+5. **Use the Halliday API for live chain, asset, and route data.** When the developer asks about supported chains, supported tokens/assets, or whether a specific input-to-output route is available, query the API instead of pointing them to the OpenAPI spec. This requires their public API key — check if they provided one during onboarding, otherwise ask for it.
 
    | Question type | API call |
    |---------------|----------|
@@ -276,7 +276,7 @@ This script validates the repo name against an allowlist of HallidayInc reposito
    - Search for placeholders: `YOUR_API_KEY`, `HALLIDAY_API_KEY`, `NEXT_PUBLIC_HALLIDAY_API_KEY`, etc.
    - Check config files and source files for any other key placeholders
 3. Ask the user for their API keys:
-   - Halliday API key (required) — free at https://dashboard.halliday.xyz/
+   - Halliday public API key (required) — free at https://dashboard.halliday.xyz/
    - Wallet provider API keys (Dynamic, Privy, etc.) if applicable to the chosen example
 4. Insert the API keys into all required locations
 
@@ -354,7 +354,7 @@ If the user selects "Look up a payment" (or if auto-activated with a payment loo
 
 2. Collect required information via AskUserQuestion:
    - **Payment ID** (required) — the UUID string
-   - **API key** — check if the developer already provided one during onboarding. If not, ask for it. Be prepared to accept a different API key than the one used for integration.
+   - **Public API key** — check if the developer already provided one during onboarding. If not, ask for it. Be prepared to accept a different public API key than the one used for integration.
    - **Owner address** — only needed for `/payments/history` lookups
 
 3. Call the Halliday API using `api-fetch.sh`:
@@ -437,13 +437,13 @@ ${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh pk_key GET /
 
 The response includes the JSON body followed by the HTTP status code on the last line.
 
-**The developer's API key may already be available from the onboarding step.** If not, ask for it. Be prepared to accept a different key than the one used for integration.
+**The developer's public API key may already be available from the onboarding step.** If not, ask for it. Be prepared to accept a different key than the one used for integration.
 
 **Do not use api-fetch.sh for write operations (confirm, withdraw). It only supports read-only lookups.**
 
 ## Support
 
 - General: support@halliday.xyz
-- API keys: https://dashboard.halliday.xyz/ (free)
+- Public API keys: https://dashboard.halliday.xyz/ (free)
 - Partnerships: partnerships@halliday.xyz
 - Contact form: https://halliday.xyz/contact

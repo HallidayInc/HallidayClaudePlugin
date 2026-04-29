@@ -30,7 +30,7 @@ Webhook support is coming soon. Currently, use polling or the SDK's built-in sta
 
 ## Access and Compliance
 
-**"How do I get an API key?"**
+**"How do I get a public API key?"**
 Create a free account at https://dashboard.halliday.xyz/.
 
 **"Is there a test environment?"**

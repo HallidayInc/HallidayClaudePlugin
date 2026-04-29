@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Opens the Halliday dashboard in the developer's default browser so they can
-# create a free account and generate an API key. Takes no arguments — the URL
-# is hardcoded so the auto-approve hook can safely fire-and-forget this call.
+# create a free account and generate a public API key. Takes no arguments — the
+# URL is hardcoded so the auto-approve hook can safely fire-and-forget this call.
 
 set -euo pipefail
 
