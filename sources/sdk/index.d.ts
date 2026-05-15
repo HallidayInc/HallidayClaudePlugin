@@ -101,9 +101,9 @@ type SignTypedData = (input: {
 type SendTransaction = (transaction: TransactionRequest, chainConfig: EVMChainConfig) => Promise<TransactionReceipt>;
 type WalletActionsType = {
     getAddress: () => Promise<Address>;
-    signMessage?: SignMessage;
-    sendTransaction?: SendTransaction;
-    signTypedData?: SignTypedData;
+    signMessage: SignMessage;
+    sendTransaction: SendTransaction;
+    signTypedData: SignTypedData;
 };
 type StatusCallback = (input: {
     type: string;
@@ -140,13 +140,7 @@ declare const PaymentsWidgetSDKParamsWithoutRolesAndFunctions: z.ZodObject<{
         inter: "inter";
     }>>;
     headerTitle: z.ZodOptional<z.ZodOptional<z.ZodString>>;
-    userWalletFunderDisplay: z.ZodOptional<z.ZodEnum<{
-        SHOW: "SHOW";
-        HIDE: "HIDE";
-    }>>;
     destinationAddress: z.ZodOptional<z.ZodString>;
-    onReady: z.ZodOptional<z.ZodAny>;
-    onError: z.ZodOptional<z.ZodAny>;
 }, z.core.$strip>;
 declare const PaymentsWidgetSDKParams: z.ZodObject<{
     apiKey: z.ZodString;
@@ -179,48 +173,33 @@ declare const PaymentsWidgetSDKParams: z.ZodObject<{
         inter: "inter";
     }>>;
     headerTitle: z.ZodOptional<z.ZodOptional<z.ZodString>>;
-    userWalletFunderDisplay: z.ZodOptional<z.ZodEnum<{
-        SHOW: "SHOW";
-        HIDE: "HIDE";
-    }>>;
-    statusCallback: z.ZodOptional<z.ZodAny>;
-    owner: z.ZodOptional<z.ZodObject<{
-        address: z.ZodString;
-        signMessage: z.ZodOptional<z.ZodAny>;
-        sendTransaction: z.ZodOptional<z.ZodAny>;
-        signTypedData: z.ZodOptional<z.ZodAny>;
-    }, z.core.$strip>>;
+    onStatus: z.ZodOptional<z.ZodAny>;
+    onConnectUserWallet: z.ZodOptional<z.ZodAny>;
     funder: z.ZodOptional<z.ZodObject<{
-        address: z.ZodString;
+        getAddress: z.ZodAny;
         signMessage: z.ZodOptional<z.ZodAny>;
         sendTransaction: z.ZodOptional<z.ZodAny>;
         signTypedData: z.ZodOptional<z.ZodAny>;
     }, z.core.$strip>>;
     userWallet: z.ZodOptional<z.ZodObject<{
-        address: z.ZodString;
+        getAddress: z.ZodAny;
         signMessage: z.ZodOptional<z.ZodAny>;
         sendTransaction: z.ZodOptional<z.ZodAny>;
         signTypedData: z.ZodOptional<z.ZodAny>;
-        connect: z.ZodOptional<z.ZodAny>;
     }, z.core.$strip>>;
     destinationAddress: z.ZodOptional<z.ZodString>;
     onReady: z.ZodOptional<z.ZodAny>;
     onError: z.ZodOptional<z.ZodAny>;
 }, z.core.$strip>;
 type PaymentsWidgetSDKParams = z.input<typeof PaymentsWidgetSDKParamsWithoutRolesAndFunctions> & {
-    owner?: Omit<WalletActionsType, "getAddress"> & {
-        address: Address;
+    funder?: Omit<WalletActionsType, "signTypedData" | "signMessage">;
+    userWallet?: Omit<WalletActionsType, "sendTransaction"> & {
+        sendTransaction?: SendTransaction;
     };
-    funder?: Omit<WalletActionsType, "getAddress"> & {
-        address: Address;
-    };
-    userWallet: Omit<WalletActionsType, "getAddress"> & {
-        address: Address;
-        connect?: () => void;
-    };
-    statusCallback?: StatusCallback;
+    onStatus?: StatusCallback;
     onReady?: () => void;
     onError?: (error: Error) => void;
+    onConnectUserWallet?: () => void;
 };
 declare const AppMode: z.ZodEnum<{
     FULL: "FULL";
@@ -239,7 +218,7 @@ declare const PaymentsWidgetQueryParams: z.ZodObject<{
     apiBaseUrl: z.ZodOptional<z.ZodString>;
     hasOwner: z.ZodBoolean;
     hasTxHandler: z.ZodBoolean;
-    hasConnect: z.ZodBoolean;
+    hasConnect: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
     hostOrigin: z.ZodNullable<z.ZodURL>;
     ipAddress: z.ZodOptional<z.ZodUnion<readonly [z.ZodIPv4, z.ZodIPv6]>>;
     featureFlags: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodBoolean>>;
@@ -284,13 +263,7 @@ declare const PaymentsWidgetQueryParams: z.ZodObject<{
         inter: "inter";
     }>>;
     headerTitle: z.ZodOptional<z.ZodOptional<z.ZodString>>;
-    userWalletFunderDisplay: z.ZodOptional<z.ZodEnum<{
-        SHOW: "SHOW";
-        HIDE: "HIDE";
-    }>>;
     destinationAddress: z.ZodOptional<z.ZodString>;
-    onReady: z.ZodOptional<z.ZodAny>;
-    onError: z.ZodOptional<z.ZodAny>;
 }, z.core.$strip>;
 type PaymentsWidgetQueryParams = z.infer<typeof PaymentsWidgetQueryParams>;
 declare enum MessageType {

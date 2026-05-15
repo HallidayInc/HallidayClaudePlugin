@@ -21,7 +21,7 @@ The Halliday API uses REST endpoints to manage payment sessions. The core flow i
 ## API Specification
 
 For endpoint details, request/response schemas, and authentication:
-Use `Grep` on `${CLAUDE_PLUGIN_ROOT}/sources/api/openapi.json` to find the relevant endpoint or schema, then `Read` only the matching lines (±50 lines of context). **Do not load the file whole.**
+Use `Grep` on `${CLAUDE_PLUGIN_ROOT}/sources/api/openapi.yaml` to find the relevant endpoint or schema, then `Read` only the matching lines (±50 lines of context). **Do not load the file whole.**
 
 ## Key Concepts
 
@@ -30,7 +30,7 @@ Use `Grep` on `${CLAUDE_PLUGIN_ROOT}/sources/api/openapi.json` to find the relev
 
 ## Authentication
 
-All API requests require a Halliday public API key. Create a free account at https://dashboard.halliday.xyz/ to get one.
+All API requests require a Halliday public API key. Create a free account at https://dashboard.halliday.xyz/ to get one, or email partnerships@halliday.xyz as a backup option.
 
 ## Supported Chains and Assets
 
@@ -55,7 +55,7 @@ web_fetch https://raw.githubusercontent.com/HallidayInc/{REPO_NAME}/main/README.
 
 ## When to Use the OpenAPI Spec
 
-Grep `${CLAUDE_PLUGIN_ROOT}/sources/api/openapi.json` when:
+Grep `${CLAUDE_PLUGIN_ROOT}/sources/api/openapi.yaml` when:
 - The developer needs exact endpoint paths, parameters, or response shapes
 - You need to construct an API request and must verify the schema
 - The developer asks about specific API capabilities not covered here

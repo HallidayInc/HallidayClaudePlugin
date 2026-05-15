@@ -20,7 +20,7 @@ Yes. React Native apps can use the SDK widget. Native mobile apps (Swift/Kotlin)
 Query the API live: `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <KEY> GET /chains`. This returns the current list of supported chains with chain IDs, explorer URLs, and native currency info. Present the results in a readable format.
 
 **"Which assets/tokens are supported?"**
-Query the API live: `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <KEY> GET /assets`. This returns all supported assets (fiat and crypto) with metadata. Summarize by chain for readability.
+Discover supported routes via `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <KEY> GET /assets/available-outputs "inputs[]=<INPUT>"` (or `/assets/available-inputs` for the reverse). To fetch metadata for specific assets, pass them explicitly: `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <KEY> GET /assets "assets[]=<ASSET>"`. Summarize results by chain for readability.
 
 **"Can I convert X to Y?" / "Is this route available?"**
 Query the API live: `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <KEY> GET /assets/available-outputs "inputs[]=<INPUT>&outputs[]=<OUTPUT>"`. If the output asset appears in the response, the route is supported. An empty `{}` response means the route is not currently available.
@@ -31,7 +31,7 @@ Webhook support is coming soon. Currently, use polling or the SDK's built-in sta
 ## Access and Compliance
 
 **"How do I get a public API key?"**
-Create a free account at https://dashboard.halliday.xyz/.
+Go to https://dashboard.halliday.xyz/ to create a free account and generate a key. As a backup, email partnerships@halliday.xyz.
 
 **"Is there a test environment?"**
 Contact the Halliday team for test information.
