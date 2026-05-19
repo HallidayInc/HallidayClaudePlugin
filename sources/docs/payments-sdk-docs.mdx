@@ -10,11 +10,13 @@ It provides the most rapid integration of Halliday Payments with a feature-rich 
 
 To have more fine-grained control over the user interface, review the [Halliday API](/pages/halliday-api-docs) documentation.
 
+To use the Halliday SDK, first get a free API key at [dashboard.halliday.xyz](https://dashboard.halliday.xyz/).
+
 ---
 
 ## Try the Halliday Payments SDK Widget
 
-Following this guide, or the [Payments Hello World](/pages/payments-hello-world) guide will result in an onramp expeirence like the following.
+Following this guide, or the [Payments Hello World](/pages/payments-hello-world) guide will result in an onramp experience like the following.
 
 Try out onramping to an external wallet with this button:
 
@@ -51,24 +53,21 @@ The `openHallidayPayments` function opens the Halliday Payments widget and accep
 
 | Name                              | Type     | Description                                                                                                        |
 | :-------------------------------- | :------- | :----------------------------------------------------------------------------------------------------------------- |
-| `apiKey`                          | string                      | Your API key for authorization. |
-| `destinationAddress` (optional)   | string                      | The address of the destination of the widget. |
-| `inputs` (optional)               | Asset[]                     | The input assets for the widget. |
-| `outputs`                         | Asset[]                     | The output assets for the widget. |
-| `onramps` (optional)              | RampName[]                  | The onramps for the widget. |
-| `offramps` (optional)             | RampName[]                  | The offramps for the widget. |
+| `apiKey`                          | string          | Your API key for authorization. |
+| `destinationAddress`              | string          | The address of the destination wallet for onramps and swaps. |
+| `inputs` (optional)               | Asset[]         | The input assets for the widget. |
+| `outputs`                         | Asset[]         | The output assets for the widget. |
 | `customStyles` (optional)         | object ([CustomStyles](/pages/payments-sdk-docs#type-definitions))       | A list of custom styles to show in the widget. See [customizing styles](#customizing-styles). |
-| `targetElementId`                 | string                      | The ID of the DOM element where the widget should be embedded. Required if `windowType` is "EMBED". |
-| `windowType` (optional)           | "MODAL" \| "POPUP" \| "EMBED"          | The desired display mode of the widget. Default is "MODAL". |
-| `statusCallback` (optional)       | StatusCallback              | Callback to receive status events. |
-| `owner` (optional)                | Owner                       | Owner wallet configuration with address and signing functions. |
-| `funder` (optional)               | Funder                      | Funder wallet configuration with signing functions. |
-| `redirects` (optional)            | object ([Redirects](/pages/payments-sdk-docs#type-definitions))         | Post-transaction redirect configuration. |
-| `paymentCategoryOrder` (optional) | PaymentCategoryOrder        | Display order of payment categories. The "open-*" item's dropdown will be opened on widget load. Only the first item in the list can be open. |
-| `fontName` (optional)             | FontName                    | Font for the widget. Default is 'haffer'. 'wudoo-mono' or 'inter' available. |
-| `headerTitle` (optional)          | string                      | Custom title for the widget header. |
-| `showSkeleton` (optional)         | boolean                     | (EMBED only) Show animated loading skeleton while widget loads. Default: `true`. |
-| `skeletonBackgroundColor` (optional) | string                   | (EMBED only) Custom skeleton background color or CSS gradient. |
+| `targetElementId` (optional)      | string          | The ID of the DOM element where the widget should be embedded if modal mode is not desired.|
+| `onStatus` (optional)             | OnStatus        | Callback to receive status events. |
+| `onConnectUserWallet` (optional)  | () => void      | Callback invoked when the user requests to connect their wallet. |
+| `onReady` (optional)              | () => void      | Callback invoked when the widget is fully preloaded and ready. |
+| `onError` (optional)              | OnError         | Callback invoked when the widget fails to load or another error occurs. |
+| `userWallet` (optional)           | UserWallet      | User wallet configuration with signing functions. This wallet address is the sole controller of the payment. If this is not provided, the user will be prompted to sign-in with an embedded wallet. |
+| `funder` (optional)               | Funder          | Funder wallet configuration with signing functions. If funder is not provided, the "pay with wallet" option will not be available to the user. |
+| `fontName` (optional)             | FontName        | Font for the widget. Default is 'haffer'. 'wudoo-mono' or 'inter' available. |
+| `headerTitle` (optional)          | string          | Custom title for the widget header. |
+
 
 ### Type Definitions
 
@@ -100,83 +99,68 @@ interface TransactionReceipt {
   rawReceipt: any;
 }
 
-type WindowType = "MODAL" | "EMBED" | "POPUP";
-
 interface CustomStyles {
   primaryColor?: string;
   backgroundColor?: string;
-  /**
-   * In popup mode, the border only shows when the window is resized and made larger.
-   * If you would like there to be no border at all, you can set it to the same color as backgroundColor.
-   */
   borderColor?: string;
   textColor?: string;
   textSecondaryColor?: string;
   accentColor?: string;
   componentShadow?: string;
   borderStyle?: "SQUARE" | "DEFAULT";
-  textMode?: "DEFAULT" | "ALL_UPPERCASE";
-  paymentCategoryGrouping?: "ATTACHED" | "BUTTON";
-  fontWeight?: "AUTO" | "MEDIUM";
-  baseFontSize?: string;
   backgroundStyle?: "OFF" | "BLUR";
-  baseBorderRadius?: string;
+  successColor?: string;
+  alertColor?: string;
 }
 
 type FontName = "haffer" | "wudoo-mono"| "inter";
 
 type HeaderTitle = string;
 
-type PaymentCategoryOrder = Array<
-  "wallet" | "open-wallet" | "exchange" | "open-exchange" | "cash" | "open-cash" | "deposit"
->;
-
-interface Redirects {
-  redirectUrl: string; // URL
-  ctaText: string;
-  secondaryRedirectUrl?: string; // URL, must be provided with secondaryCtaText
-  secondaryCtaText?: string; // Must be provided with secondaryRedirectUrl
-}
-
 type Asset = string; // Format: "chainId:tokenAddress" or native token identifier or fiat symbol
 
-// i.e. 'moonpay'
+// i.e. 'stripe'
 type RampName = string; // Onramp/offramp provider names
 
-type OrderStatus = any;
+type OnStatus = (input: { type: string; payload: any }) => void;
+type OnConnectUserWallet = () => void;
+type OnReady = () => void;
+type OnError = (error: Error) => void;
 
-type StatusCallback = (input: { type: string; payload: OrderStatus }) => void;
+type SignMessage = (input: { message: string; ownerAddress?: Address }) => Promise<string>;
+type SignTypedData = (input: { typedData: string; ownerAddress?: Address }) => Promise<string>;
+type SendTransaction = (
+    transaction: TransactionRequest,
+    chainConfig: EVMChainConfig,
+) => Promise<TransactionReceipt>;
 
-interface OwnerRole {
-  address: Address;
-  signMessage?: SignMessage;
+interface Funder {
+  getAddress: () => Promise<Address>;
+  sendTransaction: SendTransaction;
+}
+
+interface UserWallet {
+  getAddress: () => Promise<Address>;
+  signMessage: SignMessage;
+  signTypedData: SignTypedData;
   sendTransaction?: SendTransaction;
-  signTypedData?: SignTypedData
 }
 
 interface PaymentsWidgetSDKParams {
   apiKey: string;
-  destinationAddress?: Address;
-  inputs?: Asset[];
   outputs: Asset[];
-  onramps?: RampName[];
-  offramps?: RampName[];
+  sandbox?: boolean;
+  destinationAddress: Address;
   customStyles?: CustomStyles;
-
-  // windowType = "EMBED", targetElementId is required
   targetElementId?: string;
-  windowType?: WindowType;
-  owner?: OwnerRole;
-  funder?: FunderRole;
-  statusCallback?: StatusCallback;
-  redirects?: Redirects;
-  paymentCategoryOrder?: PaymentCategoryOrder;
   fontName?: FontName;
   headerTitle?: HeaderTitle;
+  userWallet?: UserWallet;
 
-  // Skeleton options (EMBED only)
-  showSkeleton?: boolean;
-  skeletonBackgroundColor?: string;
+  onStatus?: OnStatus;
+  onConnectUserWallet?: () => void;
+  onReady?: () => void;
+  onError?: (error: Error) => void;
 }
 ```
 
@@ -184,7 +168,7 @@ interface PaymentsWidgetSDKParams {
 
 ### Using the wallet connector
 
-Halliday can prompt users to choose a wallet to connect to the DApp. The wallet connector provides many options including MetaMask, Coinbase Wallet, Phantom, or Wallet Connect.
+Halliday can prompt users to choose a wallet to connect to the app. The wallet connector provides many options including MetaMask, Coinbase Wallet, Rainbow, or Wallet Connect.
 
 Clicking the button will trigger the connect-wallet prompt. If the application already prompts the user to connect a wallet, see [using a connected wallet](#using-a-connected-wallet).
 
@@ -217,6 +201,20 @@ import { connectWalletClient } from "@halliday-sdk/payments/viem";
 import { connectSigner } from "@halliday-sdk/payments/ethers";
 ```
 
+```js
+openHallidayPayments({
+    // ...
+    userWallet: {
+        getAddress: async () => "0x...",                // required, async
+        signMessage: async ({ message }) => "...",      // required
+        signTypedData: async ({ typedData }) => "...",  // required
+        sendTransaction: async (tx, chain) => TransactionReceipt,
+    },
+    onConnectUserWallet: () => { /* trigger wallet connect */ },
+    // ...
+});
+```
+
 #### Viem
 
 ```typescript copy
@@ -226,22 +224,21 @@ import { createWalletClient, custom } from "viem";
 import { base } from "viem/chains";
 
 const connect = async () => {
-  const address = (await window.ethereum.request({ method: "eth_requestAccounts" }))[0];
-  const connectedWalletClient = connectWalletClient(() => {
-    return createWalletClient({
+  const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+  const destinationAddress = accounts[0];
+
+  const userWallet = connectWalletClient(() =>
+    createWalletClient({
       chain: base,
-      transport: custom(window.ethereum)
-    });
-  });
+      transport: custom(window.ethereum),
+    }),
+  );
 
   openHallidayPayments({
     apiKey: HALLIDAY_PUBLIC_API_KEY,
-    // USDC on Base
     outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"],
-    owner: { address, ...connectedWalletClient },
-    funder: { address, ...connectedWalletClient }
-  }).catch((error) => {
-    console.log("error.issues", error.issues);
+    userWallet,
+    destinationAddress,
   });
 };
 ```
@@ -249,7 +246,7 @@ const connect = async () => {
 #### Wagmi
 
 ```jsx copy
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { openHallidayPayments } from "@halliday-sdk/payments";
 import { connectWalletClient } from "@halliday-sdk/payments/viem";
 import { useAccount, useWalletClient } from "wagmi";
@@ -257,31 +254,22 @@ import { useAccount, useWalletClient } from "wagmi";
 export default function App() {
   const { address, isConnected } = useAccount();
   const { data: walletClient, isSuccess } = useWalletClient();
-  const ref = useRef(null);
 
   useEffect(() => {
-    if (isConnected && isSuccess && walletClient && address) {
-      const connectedWalletClient = connectWalletClient(() => walletClient);
+    if (!isConnected || !isSuccess || !walletClient || !address) return;
 
-      openHallidayPayments({
-        apiKey: HALLIDAY_API_KEY,
-        outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"],
-        windowType: "EMBED",
-        targetElementId: "halliday",
-        owner: { address, ...connectedWalletClient },
-        funder: { address, ...connectedWalletClient }
-      });
-    } else if (ref.current) {
-      ref.current.innerHTML = "";
-    }
+    const userWallet = connectWalletClient(() => walletClient);
+
+    openHallidayPayments({
+      apiKey: HALLIDAY_API_KEY,
+      outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"],
+      targetElementId: "halliday",
+      destinationAddress: address,
+      userWallet,
+    });
   }, [isConnected, isSuccess, walletClient, address]);
 
-  return (
-    <div
-      id="halliday"
-      ref={ref}
-    />
-  );
+  return <div id="halliday" />;
 }
 ```
 
@@ -293,19 +281,17 @@ import { connectSigner } from "@halliday-sdk/payments/ethers";
 import { BrowserProvider } from "ethers";
 
 const connect = async () => {
-  const address = (await window.ethereum.request({ method: "eth_requestAccounts" }))[0];
-  const connectedSigner = connectSigner(() => {
-    return new BrowserProvider(window.ethereum).getSigner();
-  });
+  const [address] = await window.ethereum.request({ method: "eth_requestAccounts" });
+
+  const userWallet = connectSigner(() =>
+    new BrowserProvider(window.ethereum).getSigner(),
+  );
 
   openHallidayPayments({
-      apiKey: HALLIDAY_PUBLIC_API_KEY,
-      // USDC on Base
-      outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"],
-      owner: { address, ...connectedSigner },
-      funder: { address, ...connectedSigner }
-  }).catch((error) => {
-    console.log("error.issues", error.issues);
+    apiKey: HALLIDAY_PUBLIC_API_KEY,
+    outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"],
+    destinationAddress: address,
+    userWallet,
   });
 };
 ```
@@ -329,36 +315,23 @@ function App() {
   const { data: walletClient, isSuccess } = useWalletClient();
 
   const launchHalliday = async () => {
-    if (!isConnected || !address) return;
+    if (!isConnected || !address || !isSuccess || !walletClient) return;
 
-    let connectedWalletClient;
-    if (walletClient && isSuccess) {
-      // Remember to add Base in the Dynamic dashboard beforehand (see README)
-      connectedWalletClient = connectWalletClient(() => walletClient);
-    } else {
-      // Using window.ethereum EIP-1193 wallet like MetaMask via Dynamic
-      connectedWalletClient = window.ethereum;
-    }
+    // Remember to add Base in the Dynamic dashboard beforehand
+    const userWallet = connectWalletClient(() => walletClient);
 
     openHallidayPayments({
       apiKey: HALLIDAY_PUBLIC_API_KEY,
-      outputs: ['base:0x', 'base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'],
-      windowType: 'MODAL',
-      owner: { address, ...connectedWalletClient },
-      funder: { address, ...connectedWalletClient }
-    }).catch(e => console.error('Halliday error:', e.issues));
+      outputs: ['base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'],
+      destinationAddress: address,
+      userWallet,
+    });
   };
 
-  if (!sdkHasLoaded) {
-    return <p>Loading...</p>
-  }
+  if (!sdkHasLoaded) return <p>Loading...</p>;
 
   if (!isLoggedIn) {
-    return (
-      <button onClick={() => setShowAuthFlow(true)}>
-        Sign in
-      </button>
-    )
+    return <button onClick={() => setShowAuthFlow(true)}>Sign in</button>;
   }
 
   return (
@@ -390,23 +363,21 @@ function Component() {
     // Get the embedded wallet (or find the one you want)
     // const wallet = wallets.find(w => w.walletClientType === 'privy');
     const wallet = wallets[0];
-    const provider = await wallet.getEthereumProvider()
+    if (!wallet) return;
 
-    const connectedSigner = connectSigner(() => {
-      return new BrowserProvider(provider).getSigner()
-    });
+    const provider = await wallet.getEthereumProvider();
+
+    const userWallet = connectSigner(() =>
+      new BrowserProvider(provider).getSigner(),
+    );
 
     openHallidayPayments({
       apiKey: HALLIDAY_PUBLIC_API_KEY,
       outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"],
-      owner: { address: wallet.address, ...connectedSigner },
-      funder: { address: wallet.address, ...connectedSigner }
-    }).catch((error) => {
-      console.log('error.issues', error.issues)
+      destinationAddress: wallet.address,
+      userWallet,
     });
   };
-
-  // ...
 
   return (<div>...</div>);
 }
@@ -427,7 +398,7 @@ Later, the `openHallidayPayments` call can be executed once the widget user inte
 import { initializeClient } from "@halliday-sdk/payments";
 
 // Call early in your app (e.g., on mount)
-await initializeClient({
+initializeClient({
   apiKey: HALLIDAY_PUBLIC_API_KEY,
   onReady: () => { console.log('Preloaded and ready') }, // optional
   onError: (error) => { console.error(error) }, // optional
@@ -437,21 +408,19 @@ await initializeClient({
 ```
 
 ---
-### Embedding as an iframe
+### Embedding the SDK Widget
 
-By default, the Payments Widget opens as a modal overlaying the web page. It can also be opened as a popup window.
+By default, the Payments Widget opens as a modal overlaying the web page.
 
-Another option is embed it within a page using an `<iframe>`. This can be done by providing two additional options: `windowType` and `targetElementId`.
+Another option is to embed it within a page. This can be done by providing one option: `targetElementId`.
 
 ```typescript copy
 import { openHallidayPayments } from "@halliday-sdk/payments";
 
 openHallidayPayments({
     apiKey: HALLIDAY_PUBLIC_API_KEY,
-    // USDC on Base
     outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"],
-    windowType: "EMBED",           // Enable the embedded iframe mode
-    targetElementId: "element-id", // The HTML element id to render the iframe inside of
+    targetElementId: "element-id", // Embed the widget inside an HTML element by id
 });
 ```
 
@@ -465,7 +434,6 @@ import { openHallidayPayments } from "@halliday-sdk/payments";
 
 openHallidayPayments({
     apiKey: HALLIDAY_PUBLIC_API_KEY,
-    // USDC on Base
     outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"],
     customStyles: {
       primaryColor: '#8b5cf6',
@@ -476,16 +444,11 @@ openHallidayPayments({
       accentColor: '#7c3aed',
       componentShadow: '2px 5px #e6e6e6',
       borderStyle: 'SQUARE', // or use DEFAULT
-      textMode: 'ALL_UPPERCASE', // or use DEFAULT
-      paymentCategoryGrouping: 'ATTACHED', // or use BUTTON
-      fontWeight: 'AUTO', // or use MEDIUM
-      baseFontSize: '16px',
-      backgroundStyle: 'OFF', // or BLUR (uppercase only) only for MODAL windowType
-      baseBorderRadius: '5px',
+      backgroundStyle: 'OFF', // or BLUR (uppercase only)
+      zIndex: 1000, // number only
     },
     fontName: 'haffer', // also 'wudoo-mono' or 'inter'
     headerTitle: 'Checkout',
-    paymentCategoryOrder: ['wallet', 'exchange', 'cash'],
     // ...
 });
 ```

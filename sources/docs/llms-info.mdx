@@ -775,17 +775,11 @@ paths:
                     owner_chain:
                       type: string
                       description: Optional chain for the owner address, needed when the owner operates on a specific chain.
-                    allow_unsafe_owner:
-                      type: boolean
-                      description: Optional flag to allow an unsafe owner address.
                     client_redirect_after:
                       type: string
                       enum: [COMPLETED, FUNDED]
                       default: COMPLETED
                       description: When to redirect the user to the client_redirect_url. COMPLETED waits for the full payment to finish, FUNDED redirects after funding is confirmed.
-                    simulate_withdrawal:
-                      type: boolean
-                      description: Simulate a withdrawal for testing purposes.
                 - title: ContinueConfirmPaymentRequest
                   description: |
                     Continuation request after a USER_VERIFY instruction. Submit the signed verification
@@ -1890,7 +1884,7 @@ components:
         withdraw_authorization:
           type: string
           description: |
-            Authorization data to sign. For eip712, this is a JSON string to parse and pass to signTypedData. For erc191, pass this string directly to signMessage.
+            Authorization data to sign. For EIP712, this is a JSON string to parse and pass to signTypedData. For EIP191, pass this string directly to signMessage.
         state_token:
           type: string
           description: Opaque state token to pass back when confirming the withdrawal.

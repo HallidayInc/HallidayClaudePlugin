@@ -392,7 +392,7 @@ Local copies of Halliday's live sources are stored in `${CLAUDE_PLUGIN_ROOT}/sou
 | Source file | ~Tokens | How to use |
 |-------------|---------|------------|
 | `${CLAUDE_PLUGIN_ROOT}/sources/sdk/index.d.ts` | ~6K | **Safe to Read whole.** Contains all TypeScript types, `openHallidayPayments()` params, widget config options, wallet interface. Load this when verifying parameter names or types. |
-| `${CLAUDE_PLUGIN_ROOT}/sources/api/openapi.json` | ~47K | **Grep only.** Use `Grep` to search for endpoint paths (e.g. `/payments`), schema names (e.g. `QuoteRequest`), or field names. Then `Read` only the matching lines ±50 lines of context. |
+| `${CLAUDE_PLUGIN_ROOT}/sources/api/openapi.yaml` | ~47K | **Grep only.** Use `Grep` to search for endpoint paths (e.g. `/payments`), schema names (e.g. `QuoteRequest`), or field names. Then `Read` only the matching lines ±50 lines of context. |
 | `${CLAUDE_PLUGIN_ROOT}/sources/docs/*.mdx` | ~49K total | **Grep only.** Individual documentation pages. Use `Grep` to search for topic keywords (e.g. "onramp", "cross-chain", "EIP-712"). Then `Read` only the matching file/section. |
 
 **Lookup order:**
@@ -401,7 +401,7 @@ Local copies of Halliday's live sources are stored in `${CLAUDE_PLUGIN_ROOT}/sou
 
 **All source data is local. Do not WebFetch docs.halliday.xyz — the raw source files in `${CLAUDE_PLUGIN_ROOT}/sources/` replace that pattern.**
 
-**Never load all source files at once. Never load openapi.json or all docs pages whole.**
+**Never load all source files at once. Never load openapi.yaml or all docs pages whole.**
 
 ## Using the Halliday API
 

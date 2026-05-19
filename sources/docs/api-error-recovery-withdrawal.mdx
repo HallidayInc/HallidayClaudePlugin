@@ -36,10 +36,10 @@ Effectively, a new payment is created and then funded using the interrupted paym
   - `payment_id`: The failed payment's ID.
   - `token_amounts`: The returned amount of token from the prior `POST /payments/balances` endpoint call.
   - `recipient_address`: The address of the new payment's deposit address.
-  - `withdraw_account`: The `withdraw_account` value from the balance result (e.g. `intent` or `spw`).
-- The response includes a `signature_type` field (`eip712` or `eip191`) and a `withdraw_authorization` string. The owner wallet must sign this authorization:
-  - If `signature_type` is `eip712`: Parse `withdraw_authorization` as JSON and sign using `signTypedData`.
-  - If `signature_type` is `eip191`: Sign the `withdraw_authorization` string directly using `signMessage`.
+  - `withdraw_account`: The `withdraw_account` value from the balance result (`INTENT` or `SPW`).
+- The response includes a `signature_type` field (`EIP712` or `EIP191`) and a `withdraw_authorization` string. The owner wallet must sign this authorization:
+  - If `signature_type` is `EIP712`: Parse `withdraw_authorization` as JSON and sign using `signTypedData`.
+  - If `signature_type` is `EIP191`: Sign the `withdraw_authorization` string directly using `signMessage`.
 - Next call the [confirm withdraw endpoint](/api-reference/payments/confirm-withdrawal-request) (`POST /payments/withdraw/confirm`) with the same parameters passed to the prior API call along with the newly created `owner_signature`, `withdraw_account`, and `payload` (set to the `withdraw_authorization` string from the withdraw response). The withdrawal will be executed onchain automatically and transfer the assets from the old deposit address to the new one.
 
 ### Withdrawals
@@ -54,15 +54,15 @@ Assets lingering in a deposit address can be withdrawn to any address specified 
   - `payment_id`: The failed payment's ID.
   - `token_amounts`: The returned amount of token from the prior `POST /payments/balances` endpoint call.
   - `recipient_address`: The address to withdraw the tokens to, usually the owner's wallet.
-  - `withdraw_account`: The `withdraw_account` value from the balance result (e.g. `intent` or `spw`).
-- The response includes a `signature_type` field (`eip712` or `eip191`) and a `withdraw_authorization` string. The owner wallet must sign this authorization:
-  - If `signature_type` is `eip712`: Parse `withdraw_authorization` as JSON and sign using `signTypedData`.
-  - If `signature_type` is `eip191`: Sign the `withdraw_authorization` string directly using `signMessage`.
+  - `withdraw_account`: The `withdraw_account` value from the balance result (`INTENT` or `SPW`).
+- The response includes a `signature_type` field (`EIP712` or `EIP191`) and a `withdraw_authorization` string. The owner wallet must sign this authorization:
+  - If `signature_type` is `EIP712`: Parse `withdraw_authorization` as JSON and sign using `signTypedData`.
+  - If `signature_type` is `EIP191`: Sign the `withdraw_authorization` string directly using `signMessage`.
 - Next call the [confirm withdraw endpoint](/api-reference/payments/confirm-withdrawal-request) (`POST /payments/withdraw/confirm`) with the same parameters passed to the prior API call along with the newly created `owner_signature`, `withdraw_account`, and `payload` (set to the `withdraw_authorization` string from the withdraw response). This signature will be executed onchain automatically and transfer the assets.
 
 ### Example Withdrawal Signature Request
 
-The `POST /payments/withdraw` endpoint returns a `signature_type` field indicating the required signature method. When `signature_type` is `eip712`, the `withdraw_authorization` is a JSON string to parse and sign using `signTypedData`. When `signature_type` is `eip191`, sign the `withdraw_authorization` string directly using `signMessage`.
+The `POST /payments/withdraw` endpoint returns a `signature_type` field indicating the required signature method. When `signature_type` is `EIP712`, the `withdraw_authorization` is a JSON string to parse and sign using `signTypedData`. When `signature_type` is `EIP191`, sign the `withdraw_authorization` string directly using `signMessage`.
 
 The following is an example EIP-712 withdrawal signature request on EVM chains, returned from the `POST /payments/withdraw` API endpoint.
 
