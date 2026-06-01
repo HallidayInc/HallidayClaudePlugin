@@ -1,4 +1,6 @@
+import * as zod from 'zod';
 import { z } from 'zod';
+import * as zod_v4_core from 'zod/v4/core';
 
 declare const Address: z.ZodString;
 type Address = z.infer<typeof Address>;
@@ -109,10 +111,34 @@ type StatusCallback = (input: {
     type: string;
     payload: OrderStatus;
 }) => void;
+declare const PaymentFlowType: z.ZodEnum<{
+    wallet: "wallet";
+    cash: "cash";
+    exchange: "exchange";
+    deposit: "deposit";
+    recover: "recover";
+    withdraw: "withdraw";
+}>;
+type PaymentFlowType = z.infer<typeof PaymentFlowType>;
+declare const WalletMeta: z.ZodObject<{
+    address: z.ZodString;
+    walletName: z.ZodOptional<z.ZodString>;
+    walletType: z.ZodOptional<z.ZodString>;
+    flowType: z.ZodOptional<z.ZodEnum<{
+        wallet: "wallet";
+        cash: "cash";
+        exchange: "exchange";
+        deposit: "deposit";
+        recover: "recover";
+        withdraw: "withdraw";
+    }>>;
+}, z.core.$strip>;
+type WalletMeta = z.infer<typeof WalletMeta>;
 declare const PaymentsWidgetSDKParamsWithoutRolesAndFunctions: z.ZodObject<{
     sandbox: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
     outputs: z.ZodArray<z.ZodUnion<readonly [z.ZodString, z.ZodString]>>;
     apiKey: z.ZodString;
+    withdrawInputs: z.ZodOptional<z.ZodArray<z.ZodUnion<readonly [z.ZodString, z.ZodString]>>>;
     customStyles: z.ZodOptional<z.ZodObject<{
         primaryColor: z.ZodOptional<z.ZodString>;
         backgroundColor: z.ZodOptional<z.ZodString>;
@@ -141,11 +167,17 @@ declare const PaymentsWidgetSDKParamsWithoutRolesAndFunctions: z.ZodObject<{
     }>>;
     headerTitle: z.ZodOptional<z.ZodOptional<z.ZodString>>;
     destinationAddress: z.ZodOptional<z.ZodString>;
+    withdrawDestinationAddress: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;
+type FunderRole = Omit<WalletActionsType, "signTypedData" | "signMessage"> & {
+    walletName?: string;
+    walletType?: string;
+};
 declare const PaymentsWidgetSDKParams: z.ZodObject<{
     apiKey: z.ZodString;
     outputs: z.ZodArray<z.ZodUnion<readonly [z.ZodString, z.ZodString]>>;
     sandbox: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
+    withdrawInputs: z.ZodOptional<z.ZodArray<z.ZodUnion<readonly [z.ZodString, z.ZodString]>>>;
     customStyles: z.ZodOptional<z.ZodObject<{
         primaryColor: z.ZodOptional<z.ZodString>;
         backgroundColor: z.ZodOptional<z.ZodString>;
@@ -180,21 +212,46 @@ declare const PaymentsWidgetSDKParams: z.ZodObject<{
         signMessage: z.ZodOptional<z.ZodAny>;
         sendTransaction: z.ZodOptional<z.ZodAny>;
         signTypedData: z.ZodOptional<z.ZodAny>;
+        walletName: z.ZodOptional<z.ZodString>;
+        walletType: z.ZodOptional<z.ZodString>;
     }, z.core.$strip>>;
+    funders: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        getAddress: z.ZodAny;
+        signMessage: z.ZodOptional<z.ZodAny>;
+        sendTransaction: z.ZodOptional<z.ZodAny>;
+        signTypedData: z.ZodOptional<z.ZodAny>;
+        walletName: z.ZodOptional<z.ZodString>;
+        walletType: z.ZodOptional<z.ZodString>;
+    }, z.core.$strip>>>;
     userWallet: z.ZodOptional<z.ZodObject<{
         getAddress: z.ZodAny;
         signMessage: z.ZodOptional<z.ZodAny>;
         sendTransaction: z.ZodOptional<z.ZodAny>;
         signTypedData: z.ZodOptional<z.ZodAny>;
+        walletName: z.ZodOptional<z.ZodString>;
+        walletType: z.ZodOptional<z.ZodString>;
     }, z.core.$strip>>;
     destinationAddress: z.ZodOptional<z.ZodString>;
+    withdrawFunder: z.ZodOptional<z.ZodObject<{
+        getAddress: z.ZodAny;
+        signMessage: z.ZodOptional<z.ZodAny>;
+        sendTransaction: z.ZodOptional<z.ZodAny>;
+        signTypedData: z.ZodOptional<z.ZodAny>;
+        walletName: z.ZodOptional<z.ZodString>;
+        walletType: z.ZodOptional<z.ZodString>;
+    }, z.core.$strip>>;
+    withdrawDestinationAddress: z.ZodOptional<z.ZodString>;
     onReady: z.ZodOptional<z.ZodAny>;
     onError: z.ZodOptional<z.ZodAny>;
 }, z.core.$strip>;
 type PaymentsWidgetSDKParams = z.input<typeof PaymentsWidgetSDKParamsWithoutRolesAndFunctions> & {
-    funder?: Omit<WalletActionsType, "signTypedData" | "signMessage">;
+    funder?: FunderRole;
+    funders?: FunderRole[];
+    withdrawFunder?: FunderRole;
     userWallet?: Omit<WalletActionsType, "sendTransaction"> & {
         sendTransaction?: SendTransaction;
+        walletName?: string;
+        walletType?: string;
     };
     onStatus?: StatusCallback;
     onReady?: () => void;
@@ -216,14 +273,49 @@ declare const PaymentsWidgetQueryParams: z.ZodObject<{
         EMBED: "EMBED";
     }>>;
     apiBaseUrl: z.ZodOptional<z.ZodString>;
+    sessionType: z.ZodOptional<z.ZodEnum<{
+        wallet: "wallet";
+        cash: "cash";
+        exchange: "exchange";
+        deposit: "deposit";
+        recover: "recover";
+        withdraw: "withdraw";
+    }>>;
+    targetView: z.ZodOptional<z.ZodString>;
+    show: z.ZodOptional<z.ZodBoolean>;
     hasOwner: z.ZodBoolean;
     hasTxHandler: z.ZodBoolean;
     hasConnect: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
     hostOrigin: z.ZodNullable<z.ZodURL>;
+    hostUrl: z.ZodOptional<z.ZodNullable<z.ZodURL>>;
     ipAddress: z.ZodOptional<z.ZodUnion<readonly [z.ZodIPv4, z.ZodIPv6]>>;
     featureFlags: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodBoolean>>;
-    ownerAddress: z.ZodOptional<z.ZodString>;
-    funderAddress: z.ZodOptional<z.ZodString>;
+    ownerMeta: z.ZodOptional<z.ZodObject<{
+        address: z.ZodString;
+        walletName: z.ZodOptional<z.ZodString>;
+        walletType: z.ZodOptional<z.ZodString>;
+        flowType: z.ZodOptional<z.ZodEnum<{
+            wallet: "wallet";
+            cash: "cash";
+            exchange: "exchange";
+            deposit: "deposit";
+            recover: "recover";
+            withdraw: "withdraw";
+        }>>;
+    }, z.core.$strip>>;
+    funderMeta: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        address: z.ZodString;
+        walletName: z.ZodOptional<z.ZodString>;
+        walletType: z.ZodOptional<z.ZodString>;
+        flowType: z.ZodOptional<z.ZodEnum<{
+            wallet: "wallet";
+            cash: "cash";
+            exchange: "exchange";
+            deposit: "deposit";
+            recover: "recover";
+            withdraw: "withdraw";
+        }>>;
+    }, z.core.$strip>>>;
     onramps: z.ZodOptional<z.ZodArray<z.ZodString>>;
     offramps: z.ZodOptional<z.ZodArray<z.ZodString>>;
     inputs: z.ZodOptional<z.ZodArray<z.ZodUnion<readonly [z.ZodString, z.ZodString]>>>;
@@ -233,9 +325,11 @@ declare const PaymentsWidgetQueryParams: z.ZodObject<{
         ORG_EDGES: "ORG_EDGES";
     }>>>;
     hops: z.ZodOptional<z.ZodArray<z.ZodString>>;
+    demoScenario: z.ZodOptional<z.ZodString>;
     sandbox: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
     outputs: z.ZodArray<z.ZodUnion<readonly [z.ZodString, z.ZodString]>>;
     apiKey: z.ZodString;
+    withdrawInputs: z.ZodOptional<z.ZodArray<z.ZodUnion<readonly [z.ZodString, z.ZodString]>>>;
     customStyles: z.ZodOptional<z.ZodObject<{
         primaryColor: z.ZodOptional<z.ZodString>;
         backgroundColor: z.ZodOptional<z.ZodString>;
@@ -264,7 +358,8 @@ declare const PaymentsWidgetQueryParams: z.ZodObject<{
     }>>;
     headerTitle: z.ZodOptional<z.ZodOptional<z.ZodString>>;
     destinationAddress: z.ZodOptional<z.ZodString>;
-}, z.core.$strip>;
+    withdrawDestinationAddress: z.ZodOptional<z.ZodString>;
+}, z.core.$loose>;
 type PaymentsWidgetQueryParams = z.infer<typeof PaymentsWidgetQueryParams>;
 declare enum MessageType {
     ACTION_TRANSACTION = "ACTION_TRANSACTION",
@@ -385,10 +480,32 @@ declare class WidgetLoadError extends Error {
 
 /**
  * Opens the Halliday Payments widget.
+ * Can be called with partial or no params after a prior `initializeClient()` call,
+ * inheriting the previous config. Explicit `null`/`undefined` values override stored values.
  *
- * @param {PaymentsWidgetSDKParams} params The configurations for the payments widget
+ * @param {Partial<PaymentsWidgetSDKParams>} params The configurations for the payments widget (optional after init)
  */
-declare function openHallidayPayments(params: PaymentsWidgetSDKParams, ...args: any[]): void;
+declare function openHallidayPayments(params?: Partial<PaymentsWidgetSDKParams>, ...args: any[]): void;
+
+declare const WithdrawParams: zod.ZodObject<{
+    withdrawInputs: zod.ZodNonOptional<zod.ZodOptional<zod.ZodArray<zod.ZodUnion<readonly [zod.ZodString, zod.ZodString]>>>>;
+    withdrawFunder: zod.ZodNonOptional<zod.ZodOptional<zod.ZodObject<{
+        getAddress: zod.ZodAny;
+        signMessage: zod.ZodOptional<zod.ZodAny>;
+        sendTransaction: zod.ZodOptional<zod.ZodAny>;
+        signTypedData: zod.ZodOptional<zod.ZodAny>;
+        walletName: zod.ZodOptional<zod.ZodString>;
+        walletType: zod.ZodOptional<zod.ZodString>;
+    }, zod_v4_core.$strip>>>;
+    withdrawDestinationAddress: zod.ZodOptional<zod.ZodString>;
+}, zod_v4_core.$strip>;
+type WithdrawParams = Pick<PaymentsWidgetSDKParams, "withdrawInputs" | "withdrawDestinationAddress" | "withdrawFunder">;
+/**
+ * Opens the Halliday withdraw flow.
+ *
+ * @param {WithdrawParams} params The configurations for withdraw
+ */
+declare function openWithdraw(params?: WithdrawParams, ...args: any[]): void;
 
 /**
  * Serialize the query params to a base64 string.
@@ -413,6 +530,9 @@ declare const deserializeQueryParams: (serialized: string) => PaymentsWidgetQuer
 declare const getPaymentsWidgetUrl: (params: PaymentsWidgetQueryParams & {
     windowOrigin?: string;
 }) => string;
+
+/** Shallow-merge `next` into `prev`, letting explicit null/undefined override previous values. */
+declare const mergeParams: <T extends Record<string, unknown>>(prev: T, next: Partial<T>) => T;
 
 /**
  * Initialize and preload the Halliday Payments widget.
@@ -449,5 +569,5 @@ declare const destroyClient: () => void;
 
 declare function openActivity(): void;
 
-export { AppMode, BackgroundStyle, BorderStyle, CssFontSize, CustomStyles, FontName, HeaderTitle, MessageType, OrderStatus, PaymentsWidgetQueryParams, PaymentsWidgetSDKParams, WidgetLoadError, WidgetLoadFailureReason, WindowType, deserializeQueryParams, destroyClient, getPaymentsWidgetUrl, initializeClient, openActivity, openHallidayPayments, serializeQueryParams };
-export type { Message, MessageResponse, WidgetLoadDiagnostics };
+export { AppMode, BackgroundStyle, BorderStyle, CssFontSize, CustomStyles, FontName, HeaderTitle, MessageType, OrderStatus, PaymentFlowType, PaymentsWidgetQueryParams, PaymentsWidgetSDKParams, WalletMeta, WidgetLoadError, WidgetLoadFailureReason, WindowType, WithdrawParams, deserializeQueryParams, destroyClient, getPaymentsWidgetUrl, initializeClient, mergeParams, openActivity, openHallidayPayments, openWithdraw, serializeQueryParams };
+export type { FunderRole, Message, MessageResponse, WidgetLoadDiagnostics };

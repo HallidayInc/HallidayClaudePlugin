@@ -1,8 +1,32 @@
 ---
-title: Export of the Documentation for LLMs
-sidebarTitle: llms.txt
+title: Claude Code Plugin and LLMs.txt
+sidebarTitle: llms.txt & Plugins
 public: true
 ---
+
+## Halliday Payments Claude Code Plugin
+
+For users developing with [Claude Code](https://claude.com/product/claude-code), Halliday payments now has an official plugin available to automate tedious tasks of development.
+
+The `/halliday` command with a guided menu of flows:
+- **Ask questions and learn** — Answers backed by a bundled reference library of the official documentation pages, SDKs, and live Halliday API lookups.
+- **Clone a sample application** — Pick from several example open source repos and walk through setup end-to-end.
+- **Check my integration** — Scan your codebase against an integration checklist and flag only the items that could cause issues with the Halliday payments integration.
+- **Look up a payment** — Fetch a payment by ID, show a clear status summary with explanation, and give status-specific next steps.
+
+The Halliday Claude Code plugin will be available in the [Anthropic community marketplace](https://github.com/anthropics/claude-plugins-community) soon. For now, the plugin can be utilized in development mode using git and these commands:
+
+```
+git clone https://github.com/HallidayInc/HallidayClaudePlugin.git
+claude --plugin-dir ./HallidayClaudePlugin
+
+## Once in Claude Code, use this command to open the Halliday Claude Code plugin:
+/halliday
+```
+
+The Halliday Claude Code plugin is [open source on GitHub](https://github.com/HallidayInc/HallidayClaudePlugin/).
+
+## Export of the Documentation for LLMs
 
 The llms.txt of the documentation can be crawled from here:
 https://docs.halliday.xyz/llms.txt

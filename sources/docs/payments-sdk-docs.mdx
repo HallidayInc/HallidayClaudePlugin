@@ -47,7 +47,7 @@ Next the SDK can be imported into a front-end TypeScript or JavaScript project.
 import { openHallidayPayments } from '@halliday-sdk/payments'
 ```
 
-## Options
+## Initialization Options
 
 The `openHallidayPayments` function opens the Halliday Payments widget and accepts the following configuration options:
 
@@ -64,10 +64,10 @@ The `openHallidayPayments` function opens the Halliday Payments widget and accep
 | `onReady` (optional)              | () => void      | Callback invoked when the widget is fully preloaded and ready. |
 | `onError` (optional)              | OnError         | Callback invoked when the widget fails to load or another error occurs. |
 | `userWallet` (optional)           | UserWallet      | User wallet configuration with signing functions. This wallet address is the sole controller of the payment. If this is not provided, the user will be prompted to sign-in with an embedded wallet. |
-| `funder` (optional)               | Funder          | Funder wallet configuration with signing functions. If funder is not provided, the "pay with wallet" option will not be available to the user. |
+| `funder` (optional)               | FunderRole          | Funder wallet configuration with signing functions. If funder is not provided, the "pay with wallet" option will not be available to the user. |
+| `funders` (optional)              | FunderRole[]        | Additional funding sources available to the user at the time of a payment. See the Multiple Funders section below. |
 | `fontName` (optional)             | FontName        | Font for the widget. Default is 'haffer'. 'wudoo-mono' or 'inter' available. |
 | `headerTitle` (optional)          | string          | Custom title for the widget header. |
-
 
 ### Type Definitions
 
@@ -134,9 +134,10 @@ type SendTransaction = (
     chainConfig: EVMChainConfig,
 ) => Promise<TransactionReceipt>;
 
-interface Funder {
+interface FunderRole {
   getAddress: () => Promise<Address>;
   sendTransaction: SendTransaction;
+  walletName?: string;
 }
 
 interface UserWallet {
@@ -144,23 +145,31 @@ interface UserWallet {
   signMessage: SignMessage;
   signTypedData: SignTypedData;
   sendTransaction?: SendTransaction;
+  walletName?: string;
 }
 
 interface PaymentsWidgetSDKParams {
   apiKey: string;
   outputs: Asset[];
   sandbox?: boolean;
-  destinationAddress: Address;
+  destinationAddress?: Address;
   customStyles?: CustomStyles;
   targetElementId?: string;
   fontName?: FontName;
   headerTitle?: HeaderTitle;
   userWallet?: UserWallet;
+  funder?: FunderRole;
 
   onStatus?: OnStatus;
   onConnectUserWallet?: () => void;
   onReady?: () => void;
   onError?: (error: Error) => void;
+}
+
+interface WithdrawParams {
+  withdrawInputs?: Asset[];
+  withdrawFunder: FunderRole;
+  withdrawDestinationAddress?: Address;
 }
 ```
 
@@ -208,7 +217,8 @@ openHallidayPayments({
         getAddress: async () => "0x...",                // required, async
         signMessage: async ({ message }) => "...",      // required
         signTypedData: async ({ typedData }) => "...",  // required
-        sendTransaction: async (tx, chain) => TransactionReceipt,
+        sendTransaction: async (tx, chain) => TransactionReceipt, // Optional
+        walletName: "Bob's Account", // Optional, shown in the wallet selector
     },
     onConnectUserWallet: () => { /* trigger wallet connect */ },
     // ...
@@ -385,7 +395,11 @@ function Component() {
 export default Component
 ```
 
----
+#### Turnkey
+
+Turnkey embedded wallet signatures can be integrated with the Halliday SDK using the 
+`@turnkey/react-wallet-kit` and `@turnkey/viem` SDKs with `viem` and `@halliday-sdk/payments`. The developer is required to create an interface for the Turnkey SDK. A full React.js code example is available here: [Halliday SDK Turnkey React.js Example](https://github.com/HallidayInc/HallidaySdkTurnkeyReactExample).
+
 ### Preloading the Widget
 
 For the best user experience, the widget can be preloaded so it appears instantly when shown.
@@ -394,20 +408,134 @@ The `initializeClient` call should be done in the initial loading phase of the a
 
 Later, the `openHallidayPayments` call can be executed once the widget user interface is ready to be shown to the user.
 
+If an `initializeClient` call is made with all of the necessary parameters passed to it, the subsequent call to `openHallidayPayments` can be done without including any parameters.
+
 ```typescript copy
 import { initializeClient } from "@halliday-sdk/payments";
 
 // Call early in your app (e.g., on mount)
 initializeClient({
-  apiKey: HALLIDAY_PUBLIC_API_KEY,
+  apiKey: HALLIDAY_PUBLIC_API_KEY, // required
+  outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"], // required
   onReady: () => { console.log('Preloaded and ready') }, // optional
   onError: (error) => { console.error(error) }, // optional
+  userWallet, // optional
 });
 
 // Next, call openHallidayPayments
 ```
 
----
+### Withdraw Widget
+
+For apps that define an account for the user, like an embedded wallet or smart contract wallet, the withdraw widget allows the user to move assets out of their account.
+
+The destination of a withdrawal can be any valid address like the user's EOA or a centralized exchange account deposit address.
+
+The destination also can be a different asset on a different chain from the origin. E.g. withdraw pUSD from a user's prediction market account on Polygon to an EOA on MegaETH as USDC, executed in one user interaction.
+
+In practice, the withdraw widget (`openWithdraw`) is opened by a different button in the app user interface than the standard deposit widget defined earlier (`openHallidayPayments`).
+
+It is **required** that the `initializeClient` method is called before `openWithdraw`.
+
+| Name | Type | Description |
+| :--- | :--- | :---------- |
+| `withdrawInputs` (optional) | Asset[] | Assets that are able to be withdrawn from the account. If `initializeClient` or `openHallidayPayments` was called prior, and `withdrawInputs` is not passed, the prior `outputs` value will be used. |
+| `withdrawFunder` (required) | FunderRole | Funder wallet configuration with signing functions. |
+| `withdrawDestinationAddress` (optional) | string | Target address for the withdraw. If not defined, the `withdrawFunder` address is used as the destination of the withdrawal. |
+
+```typescript copy
+import { openWithdraw } from "@halliday-sdk/payments";
+
+openWithdraw({
+  withdrawInputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"], // (optional)
+  withdrawFunder: {
+    getAddress: async () => "0x...",
+    sendTransaction: async (tx, chain) => TransactionReceipt,
+  }, // (required)
+  withdrawDestinationAddress: '0x...',  // (optional) 
+});
+```
+
+### Show Account History
+
+To show the past Halliday payment activity of the account in the widget, the user can click or tap the icon at the top right of the widget. This opens the **Transactions & activity** page of the widget.
+
+To directly open this screen in the widget, use the `openActivity` method. In order to open this, a `userWallet` must be connected beforehand.
+
+This example connects a wallet beforehand with the `initializeClient` method.
+
+```typescript copy
+import { initializeClient, openActivity } from "@halliday-sdk/payments";
+
+/*
+ * Call `openHallidayPayments` or `initializeClient` with a `userWallet` 
+ *     parameter before calling `openActivity`.
+ */
+
+initializeClient({
+  apiKey: HALLIDAY_PUBLIC_API_KEY, // required
+  outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"], // required
+  userWallet, // required for `openActivity` to work properly
+});
+
+// For example, show the user an "Account Activity" button within the app UI.
+// This would be the button's click event handler
+function showAccountActivity() {
+  openActivity();
+}
+```
+
+This example connects a wallet beforehand with the `openHallidayPayments` method.
+
+```typescript copy
+import { openHallidayPayments, openActivity } from "@halliday-sdk/payments";
+
+// Call prior to calling `openActivity`
+openHallidayPayments({
+  apiKey: HALLIDAY_PUBLIC_API_KEY, // required
+  outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"], // required
+  userWallet, // required
+});
+
+function showAccountActivity() {
+  openActivity();
+}
+```
+
+### Multiple Funders
+
+In the scenario that a developer chooses to show multiple possible funding sources for the user, an array of funder objects can be passed to `initializeClient` or `openHallidayPayments`.
+
+Funders can be any address that is expected to fund a payment. The SDK widget will take account of token balances at the time of a payment so the user can select a possible input token and amount.
+
+**Naming Each Funder**
+
+To differentiate funders in the UI, a name string can be supplied that will be shown to the user. Pass `walletName` as a member of each funder object.
+
+```typescript copy
+import { initializeClient, openHallidayPayments } from "@halliday-sdk/payments";
+
+// First run initialization of the widget
+// Create connections to multiple funding source wallets, like shown earlier
+
+userWallet.walletName = "Alice's Cool MetaMask Wallet";
+privyWallet.walletName = "Alice's Fun Privy Wallet";
+
+openHallidayPayments({
+  userWallet,
+  funders: [
+    userWallet,  // User's MetaMask or the like
+    privyWallet, // Embedded wallet that the user is signed into with a balance
+    // More funders can go here
+  ]
+});
+```
+
+<br/>
+<div style={{width: "100%", display: "flex", justifyContent: "center" }}>
+ <img src="/public/img/multiple-funder-wallets-halliday.png" />
+</div>
+
 ### Embedding the SDK Widget
 
 By default, the Payments Widget opens as a modal overlaying the web page.
@@ -436,14 +564,14 @@ openHallidayPayments({
     apiKey: HALLIDAY_PUBLIC_API_KEY,
     outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"],
     customStyles: {
-      primaryColor: '#8b5cf6',
-      backgroundColor: '#faf5ff',
-      borderColor: 'rgba(37, 56, 167, 1)',
-      textColor: '#1f1f23',
-      textSecondaryColor: '#a78bfa',
-      accentColor: '#7c3aed',
+      primaryColor: '#66ff66', // Button (labeled in diagram below)
+      backgroundColor: '#FFFFFF', // Background
+      borderColor: 'rgba(255, 255, 255, 1)', // #FFFFFF Border
+      textColor: '#ff0000', // Text
+      textSecondaryColor: 'rgb(204, 51, 255)', // #CC33ff "Secondary text"
+      accentColor: '#33cccc', // Accent
       componentShadow: '2px 5px #e6e6e6',
-      borderStyle: 'SQUARE', // or use DEFAULT
+      borderStyle: 'SQUARE', // or undefined for default
       backgroundStyle: 'OFF', // or BLUR (uppercase only)
       zIndex: 1000, // number only
     },
@@ -458,6 +586,12 @@ The following diagram shows how these values are used:
 <br/>
 <div style={{width: "100%", display: "flex", justifyContent: "center" }}>
  <img src="/public/img/customize-ui.png" />
+</div>
+
+Colors in the above code and diagram:
+
+<div style={{width: "100%", display: "flex", justifyContent: "center" }}>
+ <img src="/public/img/sdk-widget-color-config.png" />
 </div>
 
 For further customization, please [contact the Halliday team](mailto:partnerships@halliday.xyz).
