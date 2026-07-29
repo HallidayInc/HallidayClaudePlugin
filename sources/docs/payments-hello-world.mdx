@@ -52,30 +52,66 @@ Next, integrate Halliday into an existing application with a few lines of code. 
   <Tab title="React">
     ```tsx copy
     import { useEffect } from "react";
-    import { openHallidayPayments } from "@halliday-sdk/payments";
+    import { createRoot } from "react-dom/client";
+    import { WagmiProvider, useAccount, useDisconnect, useWalletClient } from "wagmi";
+    import { mainnet, base } from "wagmi/chains";
+    import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+    import { RainbowKitProvider, getDefaultConfig, useConnectModal, useAccountModal } from "@rainbow-me/rainbowkit";
+    import "@rainbow-me/rainbowkit/styles.css";
+    import { HallidayPaymentsProvider, useHallidayPayments } from "@halliday-sdk/payments/react";
     import { connectWalletClient } from "@halliday-sdk/payments/viem";
-    import { useAccount, useWalletClient } from "wagmi";
 
-    export default function App() {
-      const { address, isConnected } = useAccount();
-      const { data: walletClient, isSuccess } = useWalletClient();
+    const wagmiConfig = getDefaultConfig({
+      appName: "My App",
+      projectId: PROJECT_ID,
+      chains: [ mainnet, base ],
+    });
+
+    const queryClient = new QueryClient();
+
+    function App() {
+      const { openDeposit, updateWallets, isReady } = useHallidayPayments();
+      const { address } = useAccount();
+      const { data: walletClient } = useWalletClient({ assertChainId: false });
+      const { openConnectModal } = useConnectModal();
+      const { openAccountModal } = useAccountModal();
+      const { disconnect } = useDisconnect();
+
+      const owner = connectWalletClient(() => walletClient);
+      const enabled = isReady && !!walletClient;
 
       useEffect(() => {
-        if (!isConnected || !isSuccess || !walletClient || !address) return;
-
-        const userWallet = connectWalletClient(() => walletClient);
-
-        openHallidayPayments({
-          apiKey: HALLIDAY_API_KEY,
-          outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"],
-          targetElementId: "halliday",
-          destinationAddress: address,
-          userWallet,
+        updateWallets({
+          owner,
+          deposit: { funders: [], destinationAddress: address },
         });
-      }, [isConnected, isSuccess, walletClient, address]);
+      }, [enabled, walletClient, address]);
 
-      return <div id="halliday" />;
+      return (
+        <div>
+          <button onClick={address ? (openAccountModal ?? (() => disconnect())) : openConnectModal}>
+            {address ? "Disconnect" : "Connect wallet"}
+          </button>
+          <button disabled={!enabled} onClick={openDeposit}>
+            Deposit with Halliday
+          </button>
+        </div>
+      );
     }
+
+    createRoot(document.getElementById("root")).render(
+      <WagmiProvider config={ wagmiConfig }>
+        <QueryClientProvider client={ queryClient }>
+          <RainbowKitProvider>
+            <HallidayPaymentsProvider
+              apiKey="HALLIDAY_API_KEY"
+              deposit={{ outputs: [ "base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" ] }}>
+              <App />
+            </HallidayPaymentsProvider>
+          </RainbowKitProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
+    );
     ```
   </Tab>
   <Tab title="HTML">
@@ -91,21 +127,26 @@ Next, integrate Halliday into an existing application with a few lines of code. 
     </script>
     <script src="https://cdn.jsdelivr.net/npm/ethers@6/dist/ethers.umd.min.js"></script>
     <script>
+      const { HallidayPayments } = hallidayPayments;
       document.getElementById('connect-wallet').addEventListener('click', async () => {
         window.ethereum = window.ethereum || window.phantom.ethereum;
         const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' });
 
-        const userWallet = connectSigner(() =>
+        const owner = connectSigner(() =>
           new ethers.BrowserProvider(window.ethereum).getSigner(),
         );
 
-        hallidayPayments.openHallidayPayments({
+        const halliday = new HallidayPayments({
           apiKey: HALLIDAY_PUBLIC_API_KEY,
-          // USDC on Base
-          outputs: ['base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'],
-          userWallet,
-          destinationAddress: address,
+          owner,
+          deposit: {
+            // USDC on Base
+            outputs: ['base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'],
+            destinationAddress: address,
+          }
         });
+
+        halliday.openDeposit();
       });
     </script>
     </html>

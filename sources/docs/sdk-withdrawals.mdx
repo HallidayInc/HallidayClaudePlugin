@@ -4,4 +4,109 @@ sidebarTitle: Withdrawals
 public: true
 ---
 
-TODO: Walk through `openWithdraw`.
+## Withdrawal Widget
+
+For apps that define an account for the user, like an embedded wallet or smart contract wallet, the withdraw widget allows the user to move assets out of their account.
+
+The destination of a withdrawal can be any valid address like the user's EOA or a centralized exchange account deposit address.
+
+The destination also can be a different asset on a different chain from the origin. E.g. withdraw pUSD from a user's prediction market account on Polygon to an EOA on MegaETH as USDC, executed in one user interaction.
+
+In practice, the withdrawal widget (`openWithdrawal`) is opened by a different button in the app user interface than the standard deposit.
+
+For complete example implementations of opening the Halliday SDK withdrawal widget, see the [Payments SDK Example Apps](/pages/payments-sdk-example-apps) page.
+
+Before the withdraw button is clicked, the withdraw configuration must be set.
+
+## Configuring the Withdrawal options
+
+[Withdrawal configuration options](/pages/payments-sdk-docs#withdrawal) are part of the Halliday config which is documented on the widget documentation page.
+
+### React
+
+With the React SDK, the constant withdraw options can be defined in the properties of a `HallidayPaymentsProvider`.
+
+```jsx
+<HallidayPaymentsProvider
+  apiKey={ HALLIDAY_PUBLIC_API_KEY }
+  withdrawal={{
+    inputs: [ "base:0x" ], // Optional, defaults to deposit.outputs
+    outputs: [ "base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" ],
+    funder: owner, // Can be any FunderRole object
+    destinationAddress: "0x...",
+  }}>
+  <App />
+</HallidayPaymentsProvider>
+```
+
+A connected wallet funder object can be passed using the `updateWallets` function after a user connects their wallet to the app.
+
+```jsx
+// Action for use in useEffect block
+updateWallets({
+  withdrawal: {
+    inputs: [ "base:0x" ], // Optional, defaults to deposit.outputs
+    outputs: [ "base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" ],
+    funder: { getAddress, sendTransaction, walletName: "MetaMask" },
+    destinationAddress: "0x...",
+  },
+});
+```
+
+### JavaScript
+
+Constant withdraw options can be passed to the constructor of a `HallidayPayments` object or passed later using the `updateConfig` function. Partial configurations are valid for either function.
+
+```js
+const halliday = new HallidayPayments({
+  apiKey: HALLIDAY_PUBLIC_API_KEY,
+  deposit,
+  withdrawal: {
+    inputs: [ "base:0x" ], // Optional, defaults to deposit.outputs
+    outputs: [ "base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" ],
+    funder: { getAddress, sendTransaction, walletName: "MetaMask" },
+    destinationAddress: "0x...",
+  },
+});
+
+// Also can be modified after initialization
+halliday.updateConfig({
+  withdrawal: {
+    inputs: [ "base:0x" ], // Optional, defaults to deposit.outputs
+    outputs: [ "base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" ],
+    funder: { getAddress, sendTransaction, walletName: "MetaMask" },
+    destinationAddress: "0x...",
+  },
+});
+```
+
+## Opening the Withdrawal widget
+
+To display the withdrawal widget, use the `openWithdrawal` function.
+
+<Tabs>
+  <Tab title="React">
+    ```tsx copy
+    import { HallidayPaymentsProvider, useHallidayPayments } from "@halliday-sdk/payments/react";
+
+    // ...
+
+    const { openWithdrawal } = useHallidayPayments();
+
+    // ...
+
+    <button onClick={openWithdrawal}>
+      Withdraw
+    </button>
+    ```
+  </Tab>
+  <Tab title="JavaScript">
+    ```tsx copy
+    const halliday = new HallidayPayments({ /* ... */});
+
+    // ...
+
+    button.addEventListener("click", halliday.openWithdrawal);
+    ```
+  </Tab>
+</Tabs>

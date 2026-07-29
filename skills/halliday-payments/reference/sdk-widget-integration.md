@@ -21,10 +21,21 @@ Or load via CDN:
 
 ## Basic Usage
 
-The widget is opened by calling `openHallidayPayments()` with a configuration object. Do NOT guess or fabricate configuration parameters — refer to the official documentation for the exact config shape.
+In JavaScript, instantiate the `HallidayPayments` class with a configuration object, then call methods on the instance:
+
+```js
+import { HallidayPayments } from "@halliday-sdk/payments";
+
+const halliday = new HallidayPayments({ apiKey: "pk_..." });
+halliday.openDeposit();    // or halliday.openWithdrawal()
+```
+
+In React, wrap the app in `HallidayPaymentsProvider` and use the `useHallidayPayments()` hook to get `openDeposit`, `updateWallets`, and `isReady`.
+
+Do NOT guess or fabricate configuration parameters — refer to the official documentation for the exact config shape.
 
 **To get the current configuration options and parameters:**
-Read `${CLAUDE_PLUGIN_ROOT}/sources/sdk/index.d.ts` (small enough to load whole) for all TypeScript types and `openHallidayPayments()` params. For additional context, Grep `${CLAUDE_PLUGIN_ROOT}/sources/docs/` for the `openHallidayPayments` section.
+Read `${CLAUDE_PLUGIN_ROOT}/sources/sdk/index.d.ts` (small enough to load whole) for all TypeScript types, including `HallidayPaymentsConfig`. For additional context, Grep `${CLAUDE_PLUGIN_ROOT}/sources/docs/` for `HallidayPayments` or `useHallidayPayments`.
 
 ## Customization
 
@@ -68,7 +79,7 @@ web_fetch https://raw.githubusercontent.com/HallidayInc/{REPO_NAME}/main/README.
 ## When to Use Raw Source Files
 
 Use the local raw source files when:
-- The developer needs the exact `openHallidayPayments()` configuration parameters → Read `${CLAUDE_PLUGIN_ROOT}/sources/sdk/index.d.ts`
+- The developer needs the exact `HallidayPaymentsConfig` parameters → Read `${CLAUDE_PLUGIN_ROOT}/sources/sdk/index.d.ts`
 - The developer asks about a specific widget feature not covered here → Grep `${CLAUDE_PLUGIN_ROOT}/sources/docs/`
 - You need to provide a code example and must verify it against official sources → Grep `${CLAUDE_PLUGIN_ROOT}/sources/docs/`
 

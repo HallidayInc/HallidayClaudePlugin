@@ -17,11 +17,11 @@ Implementing onramping from fiat to a crypto asset is a challenging endeavor for
 The Payments SDK widget UI features a ramp optimized for conversion with a simple drop-in integration. The following is the order of operations in an onramp workflow using the Halliday API.
 
 - Confirm that there is a valid route for the input and output tokens using the API.
-- Request up-to-date quotes by passing the set of providers to use (Moonpay, Stripe, Coinbase, et al) as well as the input fiat currency and amount to the API.
+- Request up-to-date quotes by passing the set of providers to use (MoonPay, Stripe, Coinbase, et al) as well as the input fiat currency and amount to the API.
 - Select a quote returned from the API and accept it by passing the payment ID, state token, owner address and destination address to the API.
 - If the payment output is >= $300 USD and the owner address has not been verified, the response will include a `USER_VERIFY` instruction. The user signs the verification payloads and submits them back to the confirm endpoint before proceeding.
 - The onramp provider checkout URL will be in the response. The user will choose their method of payment, provide payment info, and in their first purchase with the provider, input KYC information. After checkout, the onramp provider will fund the payment with tokens onchain automatically.
-- Poll the status endpoint using the payment ID to monitor the progress of the onramp until it completes onchain.
+- Poll the `GET /payments` endpoint using the payment ID to monitor the progress of the onramp until it completes onchain.
 
 **See the developer [API quickstart guide](/pages/api-quickstart) to get started building a Halliday integration for fiat onramps with payment providers and centralized exchanges.**
 
@@ -36,7 +36,7 @@ The following is the order of operations of a token swap using the API.
 - Select a quote returned from the API and accept it by passing the payment ID, state token, owner address and destination address to the API.
 - If the payment output is >= $300 USD and the owner address has not been verified, the response will include a `USER_VERIFY` instruction. The user signs the verification payloads and submits them back to the confirm endpoint before proceeding.
 - Using the deposit details in the next instruction, transfer input tokens from the funder to the payment deposit address.
-- Poll the status endpoint using the payment ID to monitor the progress of the swap until it completes onchain.
+- Poll the `GET /payments` endpoint using the payment ID to monitor the progress of the swap until it completes onchain.
 
 **See the developer [API quickstart guide](/pages/api-quickstart) to get started building a Halliday integration for swaps.**
 

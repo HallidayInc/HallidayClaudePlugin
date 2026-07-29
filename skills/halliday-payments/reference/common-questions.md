@@ -26,7 +26,7 @@ Discover supported routes via `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/sc
 Query the API live: `${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <KEY> GET /assets/available-outputs "inputs[]=<INPUT>&outputs[]=<OUTPUT>"`. If the output asset appears in the response, the route is supported. An empty `{}` response means the route is not currently available.
 
 **"How do I handle webhooks?"**
-Webhook support is coming soon. Currently, use polling or the SDK's built-in state management to track transaction status.
+Register an HTTPS endpoint with `POST /orgs/webhooks` (with a `url`, a unique `label`, and the `event_types` you want) to receive `WORKFLOW_COMPLETED` and `WORKFLOW_FAILED` deliveries when a payment reaches a terminal state. Webhook management requires a **secret** API key (`sk_...`) — public `pk_...` keys cannot manage webhooks, and the secret key is shown only once when the key set is created. Save the `signing_secret` from the create response to verify the `X-Halliday-Signature` header, and respond `2xx` within 10 seconds. Alternatively, poll `GET /payments` or use the SDK's built-in state management.
 
 ## Access and Compliance
 

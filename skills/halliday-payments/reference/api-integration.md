@@ -11,12 +11,13 @@ The Halliday API enables developers to build fully custom payment interfaces. Us
 
 ## API Overview
 
-The Halliday API uses REST endpoints to manage payment sessions. The core flow is:
+The Halliday API uses REST endpoints to quote, confirm, fund, and track payments. The core flow is:
 
-1. Create a payment session
-2. Present options to the user (your custom UI)
-3. Execute the transaction
-4. Poll for status or receive webhook (webhooks coming soon)
+1. Confirm a route exists for the input/output pair (`GET /assets/available-outputs`)
+2. Request quotes (`POST /payments/quotes`) and present them in your custom UI
+3. Confirm the selected quote (`POST /payments/confirm`), handling a `USER_VERIFY` `next_instruction` if returned
+4. Fund the payment — send the user to `next_instruction.funding_page_url` for onramps, or transfer input tokens to the deposit address for swaps
+5. Poll `GET /payments` for status, or receive a webhook
 
 ## API Specification
 
@@ -25,8 +26,11 @@ Use `Grep` on `${CLAUDE_PLUGIN_ROOT}/sources/api/openapi.yaml` to find the relev
 
 ## Key Concepts
 
-- **Sessions**: API-level concept for managing transaction state. Each payment flow creates a session.
+- **`payment_id`**: Identifies a payment across every endpoint. Returned with each quote.
+- **`state_token`**: Opaque, cryptographically signed state returned with a quote. Pass it back to `POST /payments/confirm` unmodified.
+- **One-time wallet (OTW) / deposit address**: A fresh onchain address created per payment, controlled only by the `owner_address`. Funding it starts the payment; the owner can recover or withdraw from it if the payment fails or expires.
 - **Workflow Protocol**: Halliday's underlying system that orchestrates multi-step crypto transactions (onramp → swap → deposit).
+- **Webhooks**: Register an HTTPS endpoint via `POST /orgs/webhooks` to receive `WORKFLOW_COMPLETED` / `WORKFLOW_FAILED` deliveries instead of polling. Webhook management requires a secret API key (`sk_...`), not a public key.
 
 ## Authentication
 

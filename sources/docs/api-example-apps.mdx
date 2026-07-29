@@ -48,7 +48,7 @@ const res = await fetch('https://v2.prod.halliday.xyz/payments/quotes', {
       },
       output_asset: outputAsset,
     },
-    price_currency: 'usd',
+    price_currency: 'USD',
     onramps,
     onramp_methods: fiatOnrampPayInMethods,
     customer_geolocation: { alpha3_country_code: 'USA' }
@@ -306,7 +306,7 @@ The app uses the history API endpoint to fetch payments for the wallet address.
 ```js
 async function getWalletPaymentHistory(address, paginationKey) {
   const params = new URLSearchParams({
-    category: 'ALL',
+    'categories[]': 'ALL',
     owner_address: address,
     ...(paginationKey && { pagination_key: paginationKey })
   });
@@ -464,7 +464,7 @@ const signature = await signer.signTypedData(domain, types, message);
 // Send signature to API to be posted onchain
 await confirmWithdrawal(withdrawToAddress, paymentId, balance.token, balance.value.amount, signature);
 ```
-The new payment ID can subsequently be tracked. The new payment will reach the `COMPLETED` state once the output tokens have reached the destination address.
+The new payment ID can subsequently be tracked. The new payment will reach the `COMPLETE` state once the output tokens have reached the destination address.
 
 ## React API Examples
 

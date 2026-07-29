@@ -12,13 +12,13 @@
 4. Claude reads `reference/integration-checklist.md`
 5. Claude determines the integration type is SDK Widget
 6. Claude scans the codebase:
-   - Grep for `@halliday-sdk/payments`, `openHallidayPayments`, `initializeClient`
+   - Grep for `@halliday-sdk/payments`, `new HallidayPayments(`, `HallidayPaymentsProvider`, `useHallidayPayments`, `openDeposit`, `openWithdrawal`
    - If no results found, asks the developer to specify files
 7. Claude reads the matching source files
 8. Claude reads `package.json` to check for `@halliday-sdk/payments`
 9. Claude evaluates each SDK Widget checklist item against the code:
    - Package installed
-   - Required parameters (apiKey, outputs)
+   - Required parameter (apiKey; `deposit.outputs` is optional)
    - Owner wallet actions (signTypedData, signMessage, sendTransaction)
    - Window type / target element pairing
    - API key handling (not hardcoded)

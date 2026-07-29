@@ -29,7 +29,7 @@ Effectively, a new payment is created and then funded using the interrupted paym
 **Retry a payment using the API**
 
 - A funded payment is not completing.
-- Query the [balances API endpoint](/api-reference/payments/get-wallet-balances) (`POST /payments/balances`) and pass the incomplete payment ID which we will call failed `payment_id`. This returns the deposit address (`address`), the balance, and the `account` type. Check that the balance is greater than zero. If so, a recovery can be performed. Entries with `value.kind` of `error` indicate a balance lookup failure and should be skipped. When displaying the estimated output to the user, use `amount - withdrawal_fee` (the net amount). When calling the withdraw endpoint, use the full `amount`.
+- Query the [balances API endpoint](/api-reference/payments/get-wallet-balances) (`POST /payments/balances`) and pass the incomplete payment ID which we will call failed `payment_id`. This returns the deposit address (`address`), the balance, and the `withdraw_account` type. Check that the balance is greater than zero. If so, a recovery can be performed. Entries with `value.kind` of `error` indicate a balance lookup failure and should be skipped. When displaying the estimated output to the user, use `amount - withdrawal_fee` (the net amount). When calling the withdraw endpoint, use the full `amount`.
 - [Get new quotes](/api-reference/payments/get-payment-quotes) using `POST /payments/quotes`. Provide the failed `payment_id` as `parent_payment_id` in the request body.
 - Once the user selects a quote, [confirm the new quote](/api-reference/payments/confirm-a-payment) using `POST /payments/confirm`. To do this, pass the new quote's payment ID, which we will call new `payment_id`, to the confirm endpoint. Also, `state_token`, `owner_address`, and `destination_address` are required parameters for the confirm endpoint.
 - Next call the [withdraw endpoint](/api-reference/payments/return-funds-to-owner-or-retry-payment) (`POST /payments/withdraw`) with the parameters:
@@ -40,7 +40,7 @@ Effectively, a new payment is created and then funded using the interrupted paym
 - The response includes a `signature_type` field (`EIP712` or `EIP191`) and a `withdraw_authorization` string. The owner wallet must sign this authorization:
   - If `signature_type` is `EIP712`: Parse `withdraw_authorization` as JSON and sign using `signTypedData`.
   - If `signature_type` is `EIP191`: Sign the `withdraw_authorization` string directly using `signMessage`.
-- Next call the [confirm withdraw endpoint](/api-reference/payments/confirm-withdrawal-request) (`POST /payments/withdraw/confirm`) with the same parameters passed to the prior API call along with the newly created `owner_signature`, `withdraw_account`, and `payload` (set to the `withdraw_authorization` string from the withdraw response). The withdrawal will be executed onchain automatically and transfer the assets from the old deposit address to the new one.
+- Next call the [confirm withdraw endpoint](/api-reference/payments/confirm-withdrawal-request) (`POST /payments/withdraw/confirm`) with the newly created `signature` and the `state_token` returned by the withdraw response (pass it back unmodified). The withdrawal will be executed onchain automatically and transfer the assets from the old deposit address to the new one.
 
 ### Withdrawals
 
@@ -49,7 +49,7 @@ Assets lingering in a deposit address can be withdrawn to any address specified 
 **Withdrawal steps using the API**
 
 - A funded payment is not completing.
-- Query the [balances API endpoint](/api-reference/payments/get-wallet-balances) (`POST /payments/balances`) and pass the incomplete payment ID which we will call failed `payment_id`. This returns the deposit address (`address`), the balance, and the `account` type. Check that the balance is greater than zero. If so, a recovery can be performed. Entries with `value.kind` of `error` indicate a balance lookup failure and should be skipped. When displaying the estimated output to the user, use `amount - withdrawal_fee` (the net amount). When calling the withdraw endpoint, use the full `amount`.
+- Query the [balances API endpoint](/api-reference/payments/get-wallet-balances) (`POST /payments/balances`) and pass the incomplete payment ID which we will call failed `payment_id`. This returns the deposit address (`address`), the balance, and the `withdraw_account` type. Check that the balance is greater than zero. If so, a recovery can be performed. Entries with `value.kind` of `error` indicate a balance lookup failure and should be skipped. When displaying the estimated output to the user, use `amount - withdrawal_fee` (the net amount). When calling the withdraw endpoint, use the full `amount`.
 - Next call the [withdraw endpoint](/api-reference/payments/return-funds-to-owner-or-retry-payment) (`POST /payments/withdraw`) with the parameters:
   - `payment_id`: The failed payment's ID.
   - `token_amounts`: The returned amount of token from the prior `POST /payments/balances` endpoint call.
@@ -58,7 +58,7 @@ Assets lingering in a deposit address can be withdrawn to any address specified 
 - The response includes a `signature_type` field (`EIP712` or `EIP191`) and a `withdraw_authorization` string. The owner wallet must sign this authorization:
   - If `signature_type` is `EIP712`: Parse `withdraw_authorization` as JSON and sign using `signTypedData`.
   - If `signature_type` is `EIP191`: Sign the `withdraw_authorization` string directly using `signMessage`.
-- Next call the [confirm withdraw endpoint](/api-reference/payments/confirm-withdrawal-request) (`POST /payments/withdraw/confirm`) with the same parameters passed to the prior API call along with the newly created `owner_signature`, `withdraw_account`, and `payload` (set to the `withdraw_authorization` string from the withdraw response). This signature will be executed onchain automatically and transfer the assets.
+- Next call the [confirm withdraw endpoint](/api-reference/payments/confirm-withdrawal-request) (`POST /payments/withdraw/confirm`) with the newly created `signature` and the `state_token` returned by the withdraw response (pass it back unmodified). This signature will be executed onchain automatically and transfer the assets.
 
 ### Example Withdrawal Signature Request
 

@@ -36,7 +36,7 @@ The response includes the JSON body followed by the HTTP status code on the last
 | Field | Source |
 |-------|--------|
 | Payment ID | `payment_id` |
-| Status | `status` (PENDING, UNCONFIRMED, COMPLETE, FAILED, EXPIRED, WITHDRAWN, TAINTED) |
+| Status | `status` (PENDING, UNCONFIRMED, COMPLETE, FAILED, EXPIRED, WITHDRAW_PENDING, WITHDRAWN, TAINTED) |
 | Funded | `funded` (boolean) |
 | Payment type | Fiat onramp if `quote_request.request.fixed_input_amount.asset` is a fiat code like `usd` or `eur`. Crypto swap if it's a token like `avalanche:0x`. |
 | Input | `quote_request.request.fixed_input_amount.asset` + `quote_request.request.fixed_input_amount.amount` |
@@ -117,6 +117,13 @@ The payment was not funded before the `initiate_fund_by` deadline.
   - `funded: true` — funds are stuck in the OTW. **Trigger balance check and recovery diagnosis.**
 - The `initiate_fund_by` timestamp and how long ago it expired
 
+### WITHDRAW_PENDING
+A withdrawal of the payment's funds is in progress while the payment has not reached completion.
+
+**What to show:**
+- The withdrawal transfer out of the OTW deposit address is not yet confirmed onchain.
+- This is an in-progress status — keep polling `GET /payments`. It transitions to `WITHDRAWN` once the transfer confirms.
+
 ### WITHDRAWN
 Funds were successfully withdrawn from the OTW.
 
@@ -142,7 +149,7 @@ Call `POST /payments/balances` with the payment ID.
 The response contains a `balance_results` array. Each entry has:
 - `address` — the OTW address
 - `token` — the token held (format: `chain:address`)
-- `account` — account type (`INTENT` or `SPW`)
+- `withdraw_account` — account the balance would be withdrawn from (`INTENT` or `SPW`, defaults to `SPW`)
 - `value` — either `{ kind: "amount", amount: "50.0", withdrawal_fee: "0.5" }` or `{ kind: "error" }`
 
 ### Step 2: Interpret balances
@@ -160,7 +167,7 @@ If recoverable funds exist, the developer has two options:
 1. Get new quotes: `POST /payments/quotes` with `parent_payment_id` set to the failed payment's ID
 2. User selects a quote and it's confirmed via `POST /payments/confirm`
 3. Withdraw from old OTW to new OTW: `POST /payments/withdraw` with `recipient_address` as the new payment's deposit address
-4. Sign the withdrawal authorization based on `signature_type` (eip712 or eip191)
+4. Sign the withdrawal authorization based on `signature_type` (`EIP712` — parse `withdraw_authorization` as JSON and sign with `signTypedData`; `EIP191` — sign the string directly with `signMessage`)
 5. Confirm: `POST /payments/withdraw/confirm`
 
 **Option B: Withdraw to owner wallet**

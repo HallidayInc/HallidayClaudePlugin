@@ -45,15 +45,42 @@ paths:
 npm install @halliday-sdk/payments
 ```
 
-```js
-import { openHallidayPayments } from "@halliday-sdk/payments";
+JavaScript — instantiate `HallidayPayments`, then open the flow:
 
-openHallidayPayments({
-  apiKey: "YOUR_PUBLIC_API_KEY", // Free at https://dashboard.halliday.xyz/
+```js
+import HallidayPayments from "@halliday-sdk/payments";
+
+const halliday = new HallidayPayments({
+  apiKey: HALLIDAY_PUBLIC_API_KEY, // Free at https://dashboard.halliday.xyz/
+  owner,
+  deposit: {
+    // USDC on Base
+    outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"],
+    destinationAddress: address,
+  },
 });
+
+halliday.openDeposit();
 ```
 
-For full configuration options, read `${CLAUDE_PLUGIN_ROOT}/sources/sdk/index.d.ts`.
+React — wrap the app in `HallidayPaymentsProvider` and open the flow from the `useHallidayPayments()` hook:
+
+```jsx
+import { HallidayPaymentsProvider, useHallidayPayments } from "@halliday-sdk/payments/react";
+
+function App() {
+  const { openDeposit, updateWallets, isReady } = useHallidayPayments();
+  return <button disabled={!isReady} onClick={openDeposit}>Deposit with Halliday</button>;
+}
+
+<HallidayPaymentsProvider
+  apiKey="HALLIDAY_API_KEY"
+  deposit={{ outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"] }}>
+  <App />
+</HallidayPaymentsProvider>
+```
+
+Only `apiKey` is required. For full configuration options, read `${CLAUDE_PLUGIN_ROOT}/sources/sdk/index.d.ts`.
 
 ---
 
@@ -314,15 +341,18 @@ If the user selects "Check my integration" (or if auto-activated with an integra
    **Question:** "Which type of Halliday integration are you using?"
 
    **Options:**
-   1. **SDK Widget** — Using `@halliday-sdk/payments` and `openHallidayPayments()`
+   1. **SDK Widget** — Using `@halliday-sdk/payments` (`HallidayPayments` class or the React `HallidayPaymentsProvider`)
    2. **Custom UI via API** — Using the REST API at `v2.prod.halliday.xyz`
 
 3. Scan the codebase to find Halliday integration code:
 
    **For SDK Widget**, Grep for:
    - `@halliday-sdk/payments`
-   - `openHallidayPayments`
-   - `initializeClient`
+   - `new HallidayPayments(`
+   - `HallidayPaymentsProvider`
+   - `useHallidayPayments`
+   - `openDeposit`
+   - `openWithdrawal`
 
    **For API**, Grep for:
    - `v2.prod.halliday.xyz`
@@ -379,7 +409,7 @@ If the user selects "Look up a payment" (or if auto-activated with a payment loo
 
 ## Code Accuracy Rules
 
-1. **Never fabricate parameters.** Every parameter in an `openHallidayPayments()` call or API request must be verified against official documentation.
+1. **Never fabricate parameters.** Every parameter in a `HallidayPayments` config or API request must be verified against official documentation.
 2. **Never invent code examples.** Use only code from official docs or example repositories. If no example exists for what the developer needs, say so and point them to the closest example repo.
 3. **Verify before responding.** If unsure whether a feature or parameter exists, read the relevant reference file or fetch the docs — do not guess.
 
@@ -391,7 +421,7 @@ Local copies of Halliday's live sources are stored in `${CLAUDE_PLUGIN_ROOT}/sou
 
 | Source file | ~Tokens | How to use |
 |-------------|---------|------------|
-| `${CLAUDE_PLUGIN_ROOT}/sources/sdk/index.d.ts` | ~6K | **Safe to Read whole.** Contains all TypeScript types, `openHallidayPayments()` params, widget config options, wallet interface. Load this when verifying parameter names or types. |
+| `${CLAUDE_PLUGIN_ROOT}/sources/sdk/index.d.ts` | ~6K | **Safe to Read whole.** Contains all TypeScript types, the `HallidayPayments` class, `HallidayPaymentsConfig` (widget config options), wallet interface. Load this when verifying parameter names or types. |
 | `${CLAUDE_PLUGIN_ROOT}/sources/api/openapi.yaml` | ~47K | **Grep only.** Use `Grep` to search for endpoint paths (e.g. `/payments`), schema names (e.g. `QuoteRequest`), or field names. Then `Read` only the matching lines ±50 lines of context. |
 | `${CLAUDE_PLUGIN_ROOT}/sources/docs/*.mdx` | ~49K total | **Grep only.** Individual documentation pages. Use `Grep` to search for topic keywords (e.g. "onramp", "cross-chain", "EIP-712"). Then `Read` only the matching file/section. |
 

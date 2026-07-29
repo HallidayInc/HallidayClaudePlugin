@@ -1,5 +1,5 @@
 ---
-title: Claude Code Plugin and LLMs.txt
+title: AI Plugins and LLMs.txt
 sidebarTitle: llms.txt & Plugins
 public: true
 ---
@@ -32,6 +32,39 @@ claude --plugin-dir ./HallidayClaudePlugin
 ```
 
 The Halliday Claude Code plugin is [open source on GitHub](https://github.com/HallidayInc/HallidayClaudePlugin/).
+
+## Halliday Codex Plugin
+
+For users developing with [Codex](https://openai.com/codex/), Halliday also has an official plugin available to automate tedious tasks of development.
+
+The `halliday` skill with a guided menu of flows:
+- **Ask questions and learn** — Answers backed by a bundled reference library of the official documentation pages, SDKs, and live Halliday API lookups.
+- **Clone a sample application** — Pick from several example open source repos and walk through setup end-to-end.
+- **Check my integration** — Scan your codebase against an integration checklist and flag only the items that could cause issues with the Halliday integration.
+- **Look up a payment** — Fetch a payment by ID, show a clear status summary with explanation, and give status-specific next steps.
+
+The Halliday Codex plugin repository is itself a Codex plugin marketplace, so no clone is needed. After installing Codex on the command line, add the marketplace and install the plugin:
+
+```
+codex plugin marketplace add HallidayInc/HallidayCodexPlugin
+codex plugin add halliday-payments@halliday
+```
+
+Start a new `codex` session to pick up the skill, then invoke it with `$halliday` or just ask a Halliday question:
+
+```
+## Once in Codex, use this command to open the Halliday Codex plugin:
+$halliday
+```
+
+To update to the latest version, run these commands and then start a new session:
+
+```
+codex plugin marketplace upgrade
+codex plugin add halliday-payments@halliday
+```
+
+The Halliday Codex plugin is [open source on GitHub](https://github.com/HallidayInc/HallidayCodexPlugin/).
 
 ## Export of the Documentation for LLMs
 

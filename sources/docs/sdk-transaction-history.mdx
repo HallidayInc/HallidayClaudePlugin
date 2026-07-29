@@ -4,4 +4,28 @@ sidebarTitle: Transaction History
 public: true
 ---
 
-TODO: Walk through `openActivity`. Explain how transaction history works. Explain getting the payment ID.
+To show the past Halliday payment activity of the account in the widget, the user can click or tap the icon at the top right of the widget. This opens the **Transactions & activity** page of the widget.
+
+To directly open this screen in the widget, use the `openActivity` method.
+
+<Tabs>
+  <Tab title="React">
+    ```tsx copy
+    const { openActivity } = useHallidayPayments();
+
+    // Must be called after openDeposit()/openWithdrawal()
+    <button onClick={openActivity}>
+      Open Activity
+    </button>
+    ```
+  </Tab>
+  <Tab title="JavaScript">
+    ```tsx copy
+    const halliday = new HallidayPayments({ /* ... */});
+
+    // ...
+
+    button.addEventListener("click", halliday.openActivity);
+    ```
+  </Tab>
+</Tabs>

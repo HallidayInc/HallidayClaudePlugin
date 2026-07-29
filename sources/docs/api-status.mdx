@@ -34,7 +34,7 @@ The `next_instruction.type` value can be `ONRAMP` for fiat onramp payments, `TRA
 
 **Funding page URL for fiat onramps**
 
-The `next_instruction.funding_page_url` value is a unique URL. The URL redirects to a fiat onramp provider's checkout page (i.e. Stripe, Moonpay). On this page, the user confirms their fiat payment information.
+The `next_instruction.funding_page_url` value is a unique URL. The URL redirects to a fiat onramp provider's checkout page (i.e. Stripe, MoonPay). On this page, the user confirms their fiat payment information.
 
 **Deposit information**
 
@@ -64,21 +64,20 @@ Depositing to the OTW address on the wrong chain will not execute a payment and 
 
 **Owner verification (USER_VERIFY)**
 
-When a payment output is \>= $300 USD and the owner address has not yet been verified, the `next_instruction.type` will be `USER_VERIFY` and the payment status will be `UNCONFIRMED`. The instruction contains a `verification_token` and a `verifications` array. Each entry in the array has a `reason` (`EVM_OWNER` or `EVM_WITHDRAWAL`), a `signature_type` (`EIP712`), and a `payload` string.
+When a payment output is \>= $300 USD and the owner address has not yet been verified, the `next_instruction.type` will be `USER_VERIFY` and the payment status will be `UNCONFIRMED`. The instruction contains a `verification_token` and a `verifications` array. Each entry in the array has a `reason` (`EVM_OWNER` or `EVM_WITHDRAWAL`), a `signature_type` (`EIP712` or `EIP191`), and a `payload` string.
 
-Two verification thresholds apply:
+Verification thresholds:
 
 | Order value | Verification | Behavior |
 |---|---|---|
 | < $300 | None | Proceeds directly to funding |
 | >= $300 | `EVM_OWNER` | Skipped if the owner address has previously verified |
-| >= $1M | `EVM_WITHDRAWAL` | Always required, never skipped |
 
-For each verification entry, prompt the user to sign the `payload` using `signTypedData` based on the `signature_type`. Then construct a `ContinueConfirmPaymentRequest` with the `verification_token` and the signed `signatures` array, and submit it to `POST /payments/confirm`.
+For each verification entry, prompt the user to sign the `payload` using the method that matches its `signature_type`: `signTypedData` for `EIP712` and a personal message signature (`personal_sign` / `signMessage`) for `EIP191`. Then construct a `ContinueConfirmPaymentRequest` with the `verification_token` and a `signatures` array, and submit it to `POST /payments/confirm`. Each entry in `signatures` requires `reason`, `signature_type`, and `signature`, where `reason` and `signature_type` match the corresponding verification entry.
 
 Once an owner address has produced an `EVM_OWNER` signature, subsequent payments with that address will not require the signature again. `EVM_WITHDRAWAL` verification is always required when applicable and is never skipped.
 
-If the user abandons before completing verification, the payment is not persisted and a new quote must be requested.
+If the user abandons before completing verification, the payment remains `UNCONFIRMED`. Once the quote expires, a new quote must be requested.
 
 **Verification error handling**
 
@@ -86,14 +85,15 @@ If the user abandons before completing verification, the payment is not persiste
 |---|---|---|
 | 200 | Verification passed | Continue — `next_instruction` is now `TRANSFER_IN` or `ONRAMP` |
 | 400 | Quote expired or invalid input | Re-quote from scratch |
-| 401 | Signature verification failed | Retry with the same `USER_VERIFY` instruction |
-| 409 | Already confirmed | Treat as success |
+| 401 | Signature verification failed | Prompt the user to sign the payloads again and submit fresh signatures |
+| 403 | Payment belongs to a different account | Do not retry — check the API key and payment ID |
+| 404 | Payment not found or expired | Re-quote from scratch |
 
 ## Payment Statuses
 
 The `status` property in the JSON response object is a string indicating the present status of the payment. Each of the following statuses can be returned for an onramp or swap payment.
 
-The `PENDING`, `WITHDRAW_PENDING`, and `UNCONFIRMED` statuses indicate that a payment is still in progress, so a front end application should continue polling `GET /payments` for status updates while a payment is in any of these states. All other statuses indicate that the payment is halted and polling can stop. A halted status is not necessarily terminal, however — further action can still change it. For example, a payment that becomes `EXPIRED` and is then funded can be withdrawn, transitioning its status to `WITHDRAWN`.
+The `PENDING`, `WITHDRAW_PENDING`, and `UNCONFIRMED` statuses indicate that a payment is still in progress, so a front-end application should continue polling `GET /payments` for status updates while a payment is in any of these states. All other statuses indicate that the payment is halted and polling can stop. A halted status is not necessarily terminal, however — further action can still change it. For example, a payment that becomes `EXPIRED` and is then funded can be withdrawn, transitioning its status to `WITHDRAWN`.
 
 ### Pending
 
@@ -243,7 +243,7 @@ Here is a stripped-down example of a `COMPLETE` payment status object that conta
           "consume": [
             {
               "account": "SPW",
-              "resource": { "asset": "chain:0xtoken_contract_address" },
+              "resource": { "asset": "chain:0xtoken_contract_address", "property": "BALANCE" },
               "amount": "0.0911234",
               "tx_id": "0xanother_tx_hash_here"
             }
@@ -251,7 +251,7 @@ Here is a stripped-down example of a `COMPLETE` payment status object that conta
           "produce": [
             {
               "account": "DEST",
-              "resource": { "asset": "chain:0xtoken_contract_address" },
+              "resource": { "asset": "chain:0xtoken_contract_address", "property": "BALANCE" },
               "amount": "0.0911234",
               "tx_id": "0xfinal_tx_hash_here"
             }
@@ -278,7 +278,7 @@ The following is an example response from the chains endpoint.
 {
   "ethereum": {
     "chain_id": {
-      "#": "1"
+      "#": 1
     },
     "network": "ethereum",
     "address_family": "EVM",
@@ -294,7 +294,7 @@ The following is an example response from the chains endpoint.
   },
   "arbitrum": {
     "chain_id": {
-      "#": "42161"
+      "#": 42161
     },
     "network": "arbitrum",
     "address_family": "EVM",

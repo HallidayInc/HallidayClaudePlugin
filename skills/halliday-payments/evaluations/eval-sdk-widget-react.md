@@ -11,7 +11,7 @@
 3. Claude recommends the SDK widget as the integration approach
 4. Claude identifies `HallidaySdkDynamicWagmi` as the matching example repo
 5. Claude provides guidance based on the reference file content
-6. If the developer asks for specific `openHallidayPayments()` parameters, Claude reads `${CLAUDE_PLUGIN_ROOT}/sources/sdk/index.d.ts` (small enough to load whole) to verify them
+6. If the developer asks for specific `HallidayPayments` configuration parameters, Claude reads `${CLAUDE_PLUGIN_ROOT}/sources/sdk/index.d.ts` (small enough to load whole) to verify them
 7. Claude does NOT fabricate configuration parameters
 
 ## Expected Files Loaded
@@ -27,5 +27,5 @@
 - Should NOT load all five reference files at once
 - Should NOT load `reference/api-integration.md` (developer asked for widget, not API)
 - Should NOT load `reference/compliance-and-requirements.md` (not relevant to this question)
-- Should NOT invent `openHallidayPayments()` parameters without verifying against docs
+- Should NOT invent `HallidayPayments` configuration parameters without verifying against docs
 - Should NOT recommend the API approach unless the developer specifically asks about it

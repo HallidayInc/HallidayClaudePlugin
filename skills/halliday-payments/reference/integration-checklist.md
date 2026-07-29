@@ -17,11 +17,11 @@ Do NOT flag best practices, security recommendations, UX suggestions, or optimiz
 
 ## SDK Widget Checklist
 
-Use when the developer integrates via `@halliday-sdk/payments` and `openHallidayPayments()`.
+Use when the developer integrates via `@halliday-sdk/payments` — either the `HallidayPayments` class (JavaScript) or `HallidayPaymentsProvider` + `useHallidayPayments()` (React).
 
 ### Search patterns
 
-Grep for: `@halliday-sdk/payments`, `openHallidayPayments`, `halliday-sdk`, `cdn.jsdelivr.net/npm/@halliday-sdk`
+Grep for: `@halliday-sdk/payments`, `new HallidayPayments(`, `HallidayPaymentsProvider`, `useHallidayPayments`, `openDeposit`, `openWithdrawal`, `halliday-sdk`, `cdn.jsdelivr.net/npm/@halliday-sdk`
 
 ### 1. SDK available at runtime
 
@@ -29,17 +29,19 @@ Grep for: `@halliday-sdk/payments`, `openHallidayPayments`, `halliday-sdk`, `cdn
 
 **What breaks:** Import fails at runtime, app crashes or widget is undefined.
 
-### 2. Required parameters: `apiKey` and `outputs`
+### 2. Required parameter: `apiKey`
 
-**Check:** `openHallidayPayments()` is called with both `apiKey` (string) and `outputs` (array with at least one asset).
+**Check:** The config passed to `new HallidayPayments(...)` (or to `HallidayPaymentsProvider`) includes `apiKey` (string).
 
-**What breaks:** Widget fails to load. `apiKey` is required for authentication, `outputs` defines which tokens are available. Without either, the widget shows an error.
+**What breaks:** Widget fails to load — `apiKey` is required for authentication.
 
-### 3. EMBED mode requires `targetElementId`
+Note: `deposit.outputs` is **optional** and only filters which assets are offered. Do not flag an integration for omitting it.
 
-**Check:** If `windowType` is `"EMBED"`, then `targetElementId` must also be set to a DOM element ID.
+### 3. EMBED mode: `targetElementId` must resolve to a real element
 
-**What breaks:** The widget has no container to render into. Nothing appears on screen. Only applies to EMBED — POPUP and MODAL work without it.
+**Check:** Only applies if the developer intends to embed the widget inline. In JavaScript, `targetElementId` must name a DOM element that exists when the widget opens. In React, use the `<HallidayEmbed>` component instead.
+
+**What breaks:** The widget has no container to render into and nothing appears on screen. When `targetElementId` is absent the widget renders as a full-screen MODAL, which is valid — do not flag it.
 
 ### 4. React Native: secure browser for payment providers
 
@@ -91,20 +93,26 @@ Grep for: `v2.prod.halliday.xyz`, `/payments/quotes`, `/payments/confirm`, `hall
 
 **What breaks:** Without this, any payment that requires owner verification stays stuck in `UNCONFIRMED` status. The payment cannot be funded and will never proceed. The user is blocked with no way forward.
 
+Each entry's `signature_type` is either `EIP712` or `EIP191` and determines the signing method — `EIP712` payloads are JSON strings that must be parsed and signed with `signTypedData`, `EIP191` payloads are signed directly with `signMessage`. Using one method for both fails.
+
 ```js
-// After confirm call
-if (result.next_instruction?.type === "USER_VERIFY") {
+// After confirm call — loop, since there can be more than one round-trip
+while (result.next_instruction?.type === "USER_VERIFY") {
+  const { verification_token, verifications } = result.next_instruction;
   const signatures = await Promise.all(
-    result.next_instruction.verifications.map(async (v) => ({
-      reason: v.reason,
-      signature_type: v.signature_type,
-      signature: await wallet.signTypedData(v.payload),
-    }))
+    verifications.map(async (v) => {
+      let signature;
+      if (v.signature_type === "EIP712") {
+        const typedData = JSON.parse(v.payload);
+        const { EIP712Domain, ...types } = typedData.types;
+        signature = await signer.signTypedData(typedData.domain, types, typedData.message);
+      } else {
+        signature = await signer.signMessage(v.payload);
+      }
+      return { reason: v.reason, signature_type: v.signature_type, signature };
+    })
   );
-  await confirmPayment({
-    verification_token: result.next_instruction.verification_token,
-    signatures,
-  });
+  result = await confirmPayment({ verification_token, signatures });
 }
 ```
 

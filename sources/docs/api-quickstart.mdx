@@ -162,7 +162,7 @@ Get a list of assets that can be received as outputs for the given input assets 
 
 Each of the query parameters of `inputs` and `outputs` are both arrays of strings of asset IDs which are returned by `/assets`.
 
-The `/assets/available-outputs` endpoint requires at least one input asset.
+Pass at least one input asset to `/assets/available-outputs` to get meaningful results.
 
 Additionally, onramp provider checks can be done by passing an `onramps` array of strings (`moonpay`, `coinbase`, et al). This filtering ensures a path from an input to an output can be achieved with a given onramp provider.
 
@@ -455,7 +455,7 @@ The response confirms that USDC on Base and AVAX on Avalanche can be obtained fr
 
 ## Fiat-to-Crypto Onramping with the API
 
-Halliday supports fiat onramp providers like Stripe, Moonpay, Transak and cryptocurrency exchanges (CEX) to enable users to compliantly onramp using fiat in their region with the best price available.
+Halliday supports fiat onramp providers like Stripe, MoonPay, Transak and cryptocurrency exchanges (CEX) to enable users to compliantly onramp using fiat in their region with the best price available.
 
 This enables end users to pay with credit or debit card, Apple Pay, Google Pay, or a centralized exchange balance with one simple interface.
 
@@ -491,7 +491,7 @@ curl -X POST "https://v2.prod.halliday.xyz/payments/quotes" \
       "output_asset": "base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
     },
     "price_currency": "USD",
-    "onramps": [ "MOONPAY", "TRANSAK", "STRIPE" ],
+    "onramps": [ "moonpay", "transak", "stripe" ],
     "onramp_methods": [ "CREDIT_CARD", "ACH" ],
     "customer_ip_address": "<your_customer_ip_address>"
   }'
@@ -514,7 +514,7 @@ const response = await fetch('https://v2.prod.halliday.xyz/payments/quotes', {
       output_asset: 'base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
     },
     price_currency: 'USD',
-    onramps: ['MOONPAY', 'TRANSAK', 'STRIPE'],
+    onramps: ['moonpay', 'transak', 'stripe'],
     onramp_methods: ['CREDIT_CARD', 'ACH'],
     customer_ip_address: '<your_customer_ip_address>'
   })
@@ -536,7 +536,7 @@ data = {
         'output_asset': 'base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
     },
     'price_currency': 'USD',
-    'onramps': ['MOONPAY', 'TRANSAK', 'STRIPE'],
+    'onramps': ['moonpay', 'transak', 'stripe'],
     'onramp_methods': ['CREDIT_CARD', 'ACH'],
     'customer_ip_address': '<your_customer_ip_address>'
 }
@@ -566,7 +566,7 @@ $data = [
         'output_asset' => 'base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
     ],
     'price_currency' => 'USD',
-    'onramps' => ['MOONPAY', 'TRANSAK', 'STRIPE'],
+    'onramps' => ['moonpay', 'transak', 'stripe'],
     'onramp_methods' => ['CREDIT_CARD', 'ACH'],
     'customer_ip_address' => '<your_customer_ip_address>'
 ];
@@ -605,7 +605,7 @@ func main() {
             "output_asset": "base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
         },
         "price_currency": "USD",
-        "onramps": []string{"MOONPAY", "TRANSAK", "STRIPE"},
+        "onramps": []string{"moonpay", "transak", "stripe"},
         "onramp_methods": []string{"CREDIT_CARD", "ACH"},
         "customer_ip_address": "<your_customer_ip_address>",
     }
@@ -635,7 +635,7 @@ conn.setRequestProperty("Authorization", "Bearer pk_HALLIDAY_API_KEY_HERE");
 conn.setRequestProperty("Content-Type", "application/json");
 conn.setDoOutput(true);
 
-String jsonData = "{\"request\":{\"kind\":\"FIXED_INPUT\",\"fixed_input_amount\":{\"asset\":\"USD\",\"amount\":\"100\"},\"output_asset\":\"base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913\"},\"price_currency\":\"USD\",\"onramps\":[\"MOONPAY\",\"TRANSAK\",\"STRIPE\"],\"onramp_methods\":[\"CREDIT_CARD\",\"ACH\"],\"customer_ip_address\":\"<your_customer_ip_address>\"}";
+String jsonData = "{\"request\":{\"kind\":\"FIXED_INPUT\",\"fixed_input_amount\":{\"asset\":\"USD\",\"amount\":\"100\"},\"output_asset\":\"base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913\"},\"price_currency\":\"USD\",\"onramps\":[\"moonpay\",\"transak\",\"stripe\"],\"onramp_methods\":[\"CREDIT_CARD\",\"ACH\"],\"customer_ip_address\":\"<your_customer_ip_address>\"}";
 
 try (OutputStream os = conn.getOutputStream()) {
     os.write(jsonData.getBytes());
@@ -663,7 +663,7 @@ request.body = {
     output_asset: 'base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
   },
   price_currency: 'USD',
-  onramps: ['MOONPAY', 'TRANSAK', 'STRIPE'],
+  onramps: ['moonpay', 'transak', 'stripe'],
   onramp_methods: ['CREDIT_CARD', 'ACH'],
   customer_ip_address: '<your_customer_ip_address>'
 }.to_json

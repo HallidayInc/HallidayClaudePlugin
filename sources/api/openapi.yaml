@@ -405,6 +405,12 @@ paths:
           description: Payment identifier to check
           schema:
             type: string
+        - name: enable_withdraw_pending
+          in: query
+          required: false
+          description: Controls whether the WITHDRAW_PENDING status is reported for this payment.
+          schema:
+            type: string
       responses:
         "200":
           description: Payment status retrieved successfully!
@@ -493,14 +499,16 @@ paths:
           description: Filter payments by destination address
           schema:
             type: string
-        - name: category
+        - name: categories[]
           in: query
           required: false
-          description: Filter payments by category
+          description: Filter payments by multiple categories.
           schema:
-            type: string
-            enum: [ALL, NEW_OR_FUNDED]
-            default: NEW_OR_FUNDED
+            type: array
+            items:
+              type: string
+              enum: [ALL, NEW_OR_FUNDED]
+              default: NEW_OR_FUNDED
         - name: label
           in: query
           required: false
@@ -517,6 +525,7 @@ paths:
                 required:
                   - payment_statuses
                   - next_pagination_key
+                  - total_payments
                 properties:
                   payment_statuses:
                     type: array
@@ -529,6 +538,9 @@ paths:
                       - type: "null"
                     description: Pagination key to fetch the next page of results
                     example: "42ff9b02-037f-4a90-87fb-a4d2ca128565_2025-11-12T22:08:52.517Z"
+                  total_payments:
+                    type: integer
+                    description: Total number of payments matching the query
               example:
                 payment_statuses:
                   - payment_id: "<string>"
@@ -612,6 +624,7 @@ paths:
                     processing_addresses:
                       - chain: "ethereum"
                         address: "0xaddress..."
+                        factory: "0xfactory..."
                     owner_address: "0xowner..."
                     destination_address: "0xdest..."
                 next_pagination_key: "42ff9b02-037f-4a90-87fb-a4d2ca128565_2025-11-12T22:08:52.517Z"
@@ -791,7 +804,7 @@ paths:
                             description: Must match the reason from the corresponding verification entry.
                           signature_type:
                             type: string
-                            enum: [EIP712]
+                            enum: [EIP712, EIP191]
                             description: Must match the signature_type from the corresponding verification entry.
                           signature:
                             type: string
@@ -975,7 +988,7 @@ paths:
             schema:
               $ref: "#/components/schemas/RequestForPaymentBalances"
             example:
-              payment_id: pay_abc123
+              payment_id: "41b16a6f-704e-44ba-9964-2b66df8a73e8"
               custom_queries:
                 - address: "0xabc1234567890abcdef1234567890abcdef1234"
                   token: "ethereum:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
@@ -1404,7 +1417,7 @@ components:
         address_family:
           type: string
           description: Address family for the chain
-          enum: [EVM, SOL, BTC, TON, TRON, ALEO, DOGE, LTC, XRPL]
+          enum: [EVM, SOL, BTC, TON, TRON, ALEO, DOGE, LTC, XRPL, SUI]
           example: EVM
         native_currency:
           type: object
@@ -1694,6 +1707,7 @@ components:
         - state_token
         - quoted_at
         - accept_by
+        - fault
         - failures
         - limits
       properties:
@@ -1732,6 +1746,11 @@ components:
           format: date-time
           description: |
             Timestamp of when the quote will expire, in UTC ISO 8601 format
+        fault:
+          anyOf:
+            - $ref: "#/components/schemas/Issue"
+            - type: "null"
+          description: The primary issue preventing quotes, or null if none.
         failures:
           type: array
           description: Providers that failed to return a quote.
@@ -1774,6 +1793,9 @@ components:
           items:
             $ref: "#/components/schemas/QuotedRouteItem"
           description: Quoted workflow steps and their effects
+        latency_seconds:
+          type: number
+          description: Estimated latency in seconds for this quote.
 
     Quote:
       allOf:
@@ -1854,7 +1876,7 @@ components:
           description: Developer integration fees
         currency_symbol:
           type: string
-          pattern: "^[a-zA-Z]\\w{1,7}$"
+          pattern: "^[a-zA-Z]\\w{0,7}$"
           description: Fiat currency symbol that the fees are denominated in (e.g., "USD")
           example: "USD"
 
@@ -2027,7 +2049,6 @@ components:
       required:
         - address
         - token
-        - account
         - value
       properties:
         address:
@@ -2101,7 +2122,6 @@ components:
       required:
         - address
         - token
-        - account
         - value
       properties:
         address:
@@ -2112,10 +2132,11 @@ components:
           $ref: "#/components/schemas/Token"
           description: Token identifier that was queried.
           example: "ethereum:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
-        account:
+        withdraw_account:
           type: string
-          description: Account type for the balance.
           enum: [INTENT, SPW]
+          default: SPW
+          description: Account the balance would be withdrawn from.
         value:
           oneOf:
             - type: object
@@ -2123,6 +2144,7 @@ components:
                 - kind
                 - amount
                 - withdrawal_fee
+                - min_withdrawal_amount
               properties:
                 kind:
                   type: string
@@ -2134,6 +2156,10 @@ components:
                   type: string
                   nullable: true
                   description: Withdrawal fee amount, or null if not applicable.
+                min_withdrawal_amount:
+                  type: string
+                  nullable: true
+                  description: Minimum amount that can be withdrawn, or null if not applicable.
             - type: object
               required:
                 - kind
@@ -2176,13 +2202,11 @@ components:
         withdraw_account:
           type: string
           enum: [INTENT, SPW]
-          default: SPW
           description: Type of account to withdraw from.
 
     WithdrawPaymentAuthorizationResponse:
       type: object
       required:
-        - type
         - signature_type
         - payment_id
         - withdraw_authorization
@@ -2206,46 +2230,41 @@ components:
     WithdrawPaymentRequest:
       type: object
       required:
-        - payment_id
-        - token_amounts
-        - recipient_address
-        - owner_signature
+        - signature
+        - state_token
       properties:
-        payment_id:
+        signature:
           type: string
-          description: ID of the payment to withdraw
-        token_amounts:
-          type: array
-          items:
-            $ref: "#/components/schemas/TokenAmount"
-          description: List of token amounts to withdraw back to the owner or to a requoted processing address
-        recipient_address:
+          description: The payment owner's signature over the withdraw_authorization payload from POST /payments/withdraw.
+        state_token:
           type: string
-          description: On-chain address to withdraw the funds to, on the same chain as the assets to withdraw.
-        owner_signature:
-          type: string
-          description: The payment owner's signature on the withdrawal_authorization, authorizing the withdrawal
-        withdraw_account:
-          type: string
-          enum: [INTENT, SPW]
-          default: SPW
-          description: Type of account to withdraw from. Use the account value from the balance result.
-        payload:
-          type: string
-          description: The withdraw_authorization string returned from the POST /payments/withdraw response.
+          description: Opaque state token returned by POST /payments/withdraw. Pass back unmodified.
+        polling_timeout:
+          type: integer
+          default: 300000
+          minimum: 0
+          maximum: 300000
+          description: Maximum time in milliseconds to wait for the withdrawal to complete before returning a PENDING status.
 
     WithdrawPaymentResponse:
       type: object
       required:
         - payment_id
+        - status
         - transaction_hash
       properties:
         payment_id:
           type: string
           description: ID of the payment to withdraw
-        transaction_hash:
+        status:
           type: string
-          description: Blockchain transaction hash for the withdrawal
+          enum: [SUCCESS, PENDING]
+          description: Status of the withdrawal
+        transaction_hash:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Blockchain transaction hash for the withdrawal, or null while the withdrawal is pending
 
 
     # Payment Status
@@ -2267,7 +2286,9 @@ components:
         - owner_chain
         - owner_address
         - destination_address
+        - withdrawals
         - client_redirect_url
+        - geolocation
         - declaration
       properties:
         payment_id:
@@ -2348,6 +2369,39 @@ components:
         destination_address:
           type: string
           description: Address of the destination of the payment
+        withdrawals:
+          anyOf:
+            - type: array
+              items:
+                type: object
+                required:
+                  - status
+                  - token_amounts
+                  - recipient_address
+                  - transaction_hash
+                  - issues
+                properties:
+                  status:
+                    type: string
+                    enum: [PENDING, SUCCESS, FAILED, EXPIRED]
+                  token_amounts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TokenAmount"
+                  recipient_address:
+                    type: string
+                  transaction_hash:
+                    anyOf:
+                      - type: string
+                      - type: "null"
+                  issues:
+                    anyOf:
+                      - type: array
+                        items:
+                          $ref: "#/components/schemas/Issue"
+                      - type: "null"
+            - type: "null"
+          description: Withdrawals associated with this payment, or null.
         next_instruction:
           $ref: "#/components/schemas/NextInstruction"
           nullable: true
@@ -2364,6 +2418,23 @@ components:
           type: string
           nullable: true
           description: Client redirect URL
+        geolocation:
+          anyOf:
+            - type: object
+              required:
+                - alpha3_country_code
+                - state_code
+              properties:
+                alpha3_country_code:
+                  type: string
+                  minLength: 3
+                  maxLength: 3
+                  description: ISO 3166-1 alpha-3 country code
+                state_code:
+                  type: string
+                  description: Two-letter state code, or an empty string
+            - type: "null"
+          description: Geolocation of the payment owner, or null.
         declaration:
           type: object
           nullable: true
@@ -2495,6 +2566,7 @@ components:
         - $ref: "#/components/schemas/PayinMethodIssue"
         - $ref: "#/components/schemas/OtherIssue"
         - $ref: "#/components/schemas/UnknownIssue"
+        - $ref: "#/components/schemas/OrgConfigurationIssue"
       discriminator:
         propertyName: kind
 
@@ -2526,7 +2598,7 @@ components:
           type: string
         reason:
           type: string
-          enum: [TOO_LOW, TOO_HIGH, NO_VALID_AMOUNT, UNKNOWN]
+          enum: [TOO_LOW, TOO_HIGH, UNEXPECTEDLY_LOW, UNEXPECTEDLY_HIGH, NO_VALID_AMOUNT, UNKNOWN]
 
     AmountDownstreamIssue:
       type: object
@@ -2556,7 +2628,7 @@ components:
           type: string
         reason:
           type: string
-          enum: [TOO_LOW, TOO_HIGH, NO_VALID_AMOUNT, UNKNOWN]
+          enum: [TOO_LOW, TOO_HIGH, UNEXPECTEDLY_LOW, UNEXPECTEDLY_HIGH, NO_VALID_AMOUNT, UNKNOWN]
 
     GeolocationIssue:
       type: object
@@ -2606,6 +2678,24 @@ components:
         message:
           type: string
 
+    OrgConfigurationIssue:
+      type: object
+      required:
+        - kind
+        - message
+      properties:
+        kind:
+          type: string
+          enum: [org_configuration]
+        message:
+          type: string
+        rev_share_pct:
+          type: string
+        total_pct:
+          type: string
+        threshold:
+          type: string
+
     FundingIssue:
       type: object
       required:
@@ -2619,7 +2709,13 @@ components:
         token:
           $ref: "#/components/schemas/Token"
         balance:
-          type: string
+          type: object
+          required:
+            - "#"
+          properties:
+            "#":
+              type: string
+              description: Balance amount as a decimal string.
           description: Current token balance at the funding address.
 
     OwnerIssue:
@@ -2705,7 +2801,7 @@ components:
       properties:
         status:
           type: string
-          enum: [PENDING, COMPLETE, UNREACHABLE, FAILED]
+          enum: [PENDING, COMPLETE, UNREACHABLE, FAILED, ATTEMPT_FAILED]
         type:
           type: string
           enum: [ONRAMP, ONCHAIN_STEP, USER_FUND]

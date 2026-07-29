@@ -4,4 +4,115 @@ sidebarTitle: Deposits
 public: true
 ---
 
-TODO: Walk through `openHallidayPayments`.
+The deposit modal is the primary screen of the Halliday SDK widget. Once the SDK is [initialized](/pages/payments-sdk-docs#initialization), the deposit modal can be opened at any time using the `openDeposit` function.
+
+The `openDeposit` function is meant to be called inside of a button click event handler. When the user is ready to make a deposit, they will click or tap a button in the app user interface, which will trigger the deposit modal.
+
+For complete example implementations of opening the Halliday SDK deposit widget, see the [Payments SDK Example Apps](/pages/payments-sdk-example-apps) page.
+
+## Configuring the Deposit options
+
+[Deposit configuration options](/pages/payments-sdk-docs#deposit) are part of the Halliday config which is documented on the widget documentation page.
+
+### React
+
+With the React SDK, the constant deposit options can be defined in the properties of a `HallidayPaymentsProvider`.
+
+```jsx
+<HallidayPaymentsProvider
+  apiKey={ HALLIDAY_PUBLIC_API_KEY }
+  deposit={{
+    outputs: [ "base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" ],
+    destinationAddress: smartAccountAddress,
+  }}>
+  <App />
+</HallidayPaymentsProvider>
+```
+
+Connected wallet objects can be passed using the `updateWallets` function after a user connects their wallet to the app.
+
+```jsx
+const owner = {
+  getAddress: async () => "0x...",                // required, async
+  signMessage: async ({ message }) => "...",      // required
+  signTypedData: async ({ typedData }) => "...",  // required
+  sendTransaction: async (tx, chain) => TransactionReceipt, // Optional
+  walletName: "Bob's Account", // Optional, shown in the wallet selector
+}
+
+// Action for use in useEffect block
+updateWallets({
+  owner,
+  deposit: {
+    funders: [
+      owner,
+      { getAddress, sendTransaction, walletName: "MetaMask" }
+    ],
+    destinationAddress: "0xDest...",
+  },
+});
+```
+
+### JavaScript
+
+Constant deposit options can be passed to the constructor of a `HallidayPayments` object or passed later using the `updateConfig` function. Partial configurations are valid for either function.
+
+```js
+const halliday = new HallidayPayments({
+  apiKey: HALLIDAY_PUBLIC_API_KEY,
+  deposit: {
+    outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"],
+    destinationAddress: smartAccountAddress,
+  },
+});
+
+const owner = {
+  getAddress: async () => "0x...",                // required, async
+  signMessage: async ({ message }) => "...",      // required
+  signTypedData: async ({ typedData }) => "...",  // required
+  sendTransaction: async (tx, chain) => TransactionReceipt, // Optional
+  walletName: "Bob's Account", // Optional, shown in the wallet selector
+}
+
+halliday.updateConfig({
+  owner,
+  deposit: {
+    funders: [
+      owner,
+      { getAddress, sendTransaction }
+    ],
+    destinationAddress: "0xDest...",
+  },
+});
+```
+
+## Opening the Deposit widget
+
+To display the deposit widget, use the `openDeposit` function.
+
+<Tabs>
+  <Tab title="React">
+    ```tsx copy
+    import { HallidayPaymentsProvider, useHallidayPayments } from "@halliday-sdk/payments/react";
+
+    // ...
+
+    const { openDeposit, updateWallets, isReady } = useHallidayPayments();
+
+    // ...
+
+    <button onClick={openDeposit}>
+      Deposit
+    </button>
+    ```
+  </Tab>
+  <Tab title="JavaScript">
+    ```tsx copy
+    const halliday = new HallidayPayments({ /* ... */});
+
+    // ...
+
+    button.addEventListener("click", halliday.openDeposit);
+    ```
+  </Tab>
+</Tabs>
