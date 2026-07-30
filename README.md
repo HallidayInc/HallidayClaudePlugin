@@ -14,14 +14,33 @@ A Claude Code plugin that gives Claude the context it needs to help developers i
 
 ## Install
 
-After installing Claude Code on the command line, add the Halliday plugin.
+After installing Claude Code on the command line, add the Halliday plugin from either marketplace.
 
-The Halliday Claude Code plugin is now available in the [Anthropic community marketplace](https://github.com/anthropics/claude-plugins-community). After installing Claude Code on the command line, add the plugin using the Anthropic community marketplace:
+**Halliday marketplace (recommended)** — this repository is also a Claude Code marketplace, so `claude plugin update` picks up a new version the moment it is published:
+
+```bash
+claude plugin marketplace add HallidayInc/HallidayClaudePlugin
+claude plugin install halliday-payments@halliday
+```
+
+**Anthropic community marketplace** — the plugin is also published in the [Anthropic community marketplace](https://github.com/anthropics/claude-plugins-community), where entries are pinned to a reviewed commit and updated on Anthropic's schedule:
 
 ```bash
 claude plugin marketplace add anthropics/claude-plugins-community
-claude plugin install halliday-payments
+claude plugin install halliday-payments@claude-community
 ```
+
+Installing from both marketplaces at once is fine — the `@halliday` and `@claude-community` suffixes keep them apart. Enable only one at a time to avoid loading the skill twice.
+
+## Updating
+
+```bash
+claude plugin update halliday-payments@halliday
+```
+
+Installs from the Halliday marketplace track this repository's `main` directly, so a new version is available as soon as it is published. Installs from the Anthropic community marketplace advance when that marketplace re-pins its commit, which can lag by days.
+
+## Development mode
 
 To work on a personalized fork, the plugin can be utilized in development mode using git and these commands:
 
@@ -29,8 +48,8 @@ To work on a personalized fork, the plugin can be utilized in development mode u
 git clone https://github.com/HallidayInc/HallidayClaudePlugin.git
 claude --plugin-dir ./HallidayClaudePlugin
 
-## Once in Claude Code, use this command to open the Halliday Claude Code plugin:
-/halliday
+# Once in Claude Code, use this command to open the Halliday Claude Code plugin:
+# /halliday
 ```
 
 ## Usage

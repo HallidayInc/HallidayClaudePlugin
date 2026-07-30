@@ -1,0 +1,25 @@
+{
+  "name": "halliday",
+  "owner": {
+    "name": "Halliday Inc.",
+    "email": "support@halliday.xyz",
+    "url": "https://halliday.xyz"
+  },
+  "description": "Official Halliday marketplace for Claude Code plugins.",
+  "plugins": [
+    {
+      "name": "halliday-payments",
+      "source": "./",
+      "description": "A Claude Code plugin for development with Halliday Payments, the all-in-one platform for integrating crypto deposits, fiat-to-crypto onramps, and cross-chain swaps.",
+      "homepage": "https://docs.halliday.xyz",
+      "category": "Productivity",
+      "keywords": [
+        "halliday",
+        "payments",
+        "crypto",
+        "onramp",
+        "cross-chain"
+      ]
+    }
+  ]
+}
