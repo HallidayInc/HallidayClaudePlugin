@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
-  title: Halliday API V2
+  title: Halliday
   description: |
-    API V2 for Halliday's payment infrastructure, supporting onramps, swaps, and offramps.
+    Halliday's payment infrastructure, supporting onramps, swaps, and offramps.
 
     This API provides a unified interface for cryptocurrency payments, allowing developers to:
     - Quote payments across multiple providers

@@ -24,7 +24,7 @@ Or load via CDN:
 In JavaScript, instantiate the `HallidayPayments` class with a configuration object, then call methods on the instance:
 
 ```js
-import { HallidayPayments } from "@halliday-sdk/payments";
+import HallidayPayments from "@halliday-sdk/payments";
 
 const halliday = new HallidayPayments({ apiKey: "pk_..." });
 halliday.openDeposit();    // or halliday.openWithdrawal()
@@ -43,7 +43,9 @@ The SDK widget supports custom styling (colors, branding). Grep `${CLAUDE_PLUGIN
 
 ## Wallet Compatibility
 
-Works with any EVM-compatible wallet provider:
+`FunderRole` is a discriminated union of `EvmFunderRole` and `SolFunderRole`, keyed on `walletType`.
+
+**EVM funders** (`walletType?: "EVM"` — optional, so untagged configs still work) use `sendTransaction(tx, EVMChainConfig)`. Works with any EVM-compatible wallet provider:
 - Dynamic
 - Privy
 - RainbowKit
@@ -52,6 +54,13 @@ Works with any EVM-compatible wallet provider:
 - Viem
 - Wagmi
 - Any other EVM wallet
+
+**Solana funders** set `walletType: "SOL"` (required — it's what discriminates the union) and provide `getAddress` plus a `SolSendTransaction`, which receives a `SolChainConfig`.
+
+The **owner** is configured separately, and which chains it accepts depends on the variant:
+- `type: "direct"` (`OwnerRole`) — `walletType?: "EVM"`, EVM only
+- `type: "wallet-auth"` — `walletType` is a `WalletAuthChain`: `"EVM"`, `"SOL"`, or `"SUI"`
+- `type: "otp-auth"` — email address, no wallet
 
 A wallet provider object can be passed to the widget configuration. Refer to the docs for the exact parameter name and format.
 

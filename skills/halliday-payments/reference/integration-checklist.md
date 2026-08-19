@@ -35,7 +35,7 @@ Grep for: `@halliday-sdk/payments`, `new HallidayPayments(`, `HallidayPaymentsPr
 
 **What breaks:** Widget fails to load — `apiKey` is required for authentication.
 
-Note: `deposit.outputs` is **optional** and only filters which assets are offered. Do not flag an integration for omitting it.
+Note: `deposit.outputs` is **optional** and only filters which assets are offered — when unset it defaults to `[]`, meaning no filter (all assets accepted). Do not flag an integration for omitting it. (The required, non-optional `outputs` in `PaymentsWidgetSDKParams` is the widget's internal URL-param schema, not the `HallidayPaymentsConfig` object integrators pass to `new HallidayPayments(...)`.)
 
 ### 3. EMBED mode: `targetElementId` must resolve to a real element
 

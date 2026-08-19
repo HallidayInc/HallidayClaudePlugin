@@ -40,7 +40,7 @@ Contact the Halliday team for test information.
 Only for fiat onramps (handled by the provider, not Halliday). Coinbase allows no-KYC up to $500 USD. No KYC for crypto-to-crypto swaps. See [compliance-and-requirements.md](compliance-and-requirements.md).
 
 **"What fiat currencies are supported?"**
-USD and EUR for fiat onramping.
+Multiple fiat currencies, depending on the onramp provider and region — support is worldwide but varies. Query `/assets` for what's live. Note a user's bank may apply an FX charge if the onramp currency differs from their account currency.
 
 **"What countries are restricted?"**
 Restrictions vary by fiat onramp provider and change frequently. No restrictions on crypto-to-crypto swaps. See [compliance-and-requirements.md](compliance-and-requirements.md).

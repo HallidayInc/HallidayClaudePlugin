@@ -1,0 +1,215 @@
+---
+title: Halliday API Integration Checklist
+sidebarTitle: API Integration Checklist
+public: true
+---
+
+Integrations that implement the Halliday API directly should utilize this checklist to ensure that the Halliday integration is feature complete before proceeding to production.
+
+**Failing to handle the described scenarios for deposits in an integration may lead to lost user assets that cannot be properly recovered.**
+
+### Quotes
+
+1. Quote request body `onramp_methods` filters are valid for the desired rails for onramp quotes. E.g. [Debit card, ACH, et al](/api-reference/payments/get-payment-quotes#body-onramp-methods).
+
+2. [Quote options](/api-reference/payments/get-payment-quotes) for the user are sorted in a thoughtful manner, for example by best price (highest of `quotes[i].output_amount.amount`) or lowest estimated time (`quotes[i].latency_seconds`) and desired or undesired [onramp providers](/api-reference/payments/get-payment-quotes#body-onramps) are filtered in or out (for onramps only, `quotes[i].onramp`).
+
+3. Quotes, even [confirmed](/api-reference/payments/confirm-a-payment) ones, that are not executed within a few minutes are safely abandoned in an app's user interface in favor of generating a new quote with the latest prices. The time period before a non-funded payment becomes considered stale is approximately 5 minutes after the quote is made (response body `quoted_at`) and is indicated by the `accept_by` response body parameter.
+
+### Fees
+
+4. Fees are presented to the user (seen as "Price Impact" in the [Halliday Widget](https://demo.halliday.xyz/)). These fees include gas fees, DEX slippage, bridge fees, and optionally a revenue share fee.
+
+### Statuses
+
+5. Every [payment status](/pages/api-status#payment-statuses) that can be returned from the Halliday API is accounted for in the logic of a front-end application.
+
+### Wallet Signatures
+
+6. The owner EVM wallet of every payment is able to create an EIP-712 signature. This will be needed in the event a payment has funds that require recovery.
+
+7. The owner EVM wallet of every payment is able to create an EIP-191 signature. This will be needed in the event the user needs to verify their ownership of the address of the payment, which is described in the [next instruction API endpoint response sequence documentation](/pages/api-status#next-instruction).
+
+8. Owner verification signature flows using the API's `/confirm` endpoint have been tested on nascent addresses on payments quoted at >\$300 USD and >\$1M USD for all supported wallet types. Remember, quoting, confirming, submitting signatures, then abandoning a payment is acceptable to test this flow. **There is no need to actually fund these confirmed payments to test the signature functionality.**
+
+### Recoveries
+
+9. Recoveries of funds that need additional action are handled by withdrawing to a user-controlled address on a proper chain or rolling them over to a newly quoted recovery payment. This requires a wallet signature from the end user. To implement this, see the [API Recoveries & Errors documentation](/pages/api-error-recovery-withdrawal), then the **Payment Paths Checklist** below.
+
+10. Testing of a payment recovery has been done, such as by creating a payment and under-funding it. For example, create and confirm a quote of a 50 USDC swap from Arbitrum to USDC on Base, then send just 0.25 USDC to the deposit address on Arbitrum. After the deposit completes, create the signature for a withdrawal or recovery payment and submit it to the proper API endpoint. Check that the recovery completed properly onchain.
+
+    Other methods to test recoveries include sending the wrong token to a deposit address e.g. send USDT instead of USDC to a deposit address on Arbitrum.
+
+    Also sending the correct input token to the deposit address on the wrong chain e.g. send USDC to the deposit address on Polygon instead of the intended Arbitrum address from the payment details.
+
+    The Halliday SDK widget detects some payment states that need additional action automatically. It notifies the user in the UI, and has proper UX patterns for both withdrawing or rolling assets over to a recovery payment. Test a recovery using the under-funding method described above with the widget at [demo.halliday.xyz](http://demo.halliday.xyz) and observe the full UX of a recovery.
+
+11. For onramp quotes, one of the following two implementations is used in order to guess the user's geolocation, and present them with valid onramp provider options:
+
+    1. The end-user's machine is the one that makes the HTTP request to the Halliday API for a quote, in effect exposing the end user's IP address in the request, which is used to guess their jurisdiction and present them with quotes using valid onramp providers that are able to fulfill their onramp.
+
+    2. If a back-end server of the client developer infrastructure is used to make API requests for end-user quotes, the end user's IP address is either forwarded using the [documented](/api-reference/payments/get-payment-quotes#body-customer-ip-address) `customer_ip_address` request body parameter, or a canned IP is used with a corresponding geolocation that is equivalent to the user's IP address.
+
+    Why is this necessary? Not all onramp providers are permitted to service customers in all locations due to local regulations. Presenting an end user with an invalid onramp provider will lead to a poor user experience and create churn and hurt overall conversion metrics.
+
+    An example: an app's end user is in the United Kingdom (UK). The client developer's web server, which is the origin of Halliday API quote requests, is located in AWS US East 1, and has an IP address corresponding to The United States of America (USA). The `customer_ip_address` is not forwarded in the API quote requests. ExamplePay onramp provider does not service users in the UK.
+
+    ExamplePay is presented to the user as a valid onramp provider because it is valid for ExamplePay to service onramps for users in the USA. The UK user begins to fill out their KYC information for an ExamplePay onramp based on the onramp quote returned to them. The form information submitted to ExamplePay is rejected due to the KYC information confirming the user's UK residency. The user wasted several minutes filling in information that would inevitably get rejected.
+
+    The solution to this described antipattern is to forward the end user's IP address using `customer_ip_address` in the quote request body.
+
+    Also, forwarding a canned IP address that corresponds to the user's location would solve the same problem. A caveat to the canned IP address solution is that IP address derived geolocations are not always accurate. Additionally, a user in New York can be serviced by fewer onramp providers than another user just a few miles away in New Jersey, due to local regulations. Local jurisdictions can have different IPs, so a single canned IP per country is not a granular solution.
+
+## Payment Paths Checklist
+
+It is required to test 1 through 5 of the following payment paths live onchain with a swap payment before deploying a Halliday integration to production.
+
+Path 6 needs to be properly handled in an application but a developer is not able to arbitrarily force a payment into the described state in order to test it. One proper "recovery" implementation for an app is necessary to handle all possible unintended paths a.k.a. unhappy paths.
+
+For each of the paths described, a "recovery" refers to the recovery process described in the [API quickstart](https://docs.halliday.xyz/pages/api-quickstart). Assets are moved from an OTW address using an EIP-712 signature made by the payment's owner wallet. There are two types of recoveries. In the first, assets can be withdrawn to the deposit address of a recovery payment, which has a new quote, and will automatically execute once it is funded. The second type is a withdrawal of assets directly to a user-controlled address that is specified in the signature.
+
+1. **The intended path or happy path**
+
+    The user funds the payment's deposit address with the proper token, the proper amount, on the proper blockchain immediately after the quote is confirmed via the Halliday API. In the vast majority of payments, the status of the payment will reach `COMPLETE` timely as the user receives their assets in the destination address. After funding, these payments still need to have their status monitored because any payment may experience an unexpected delay or other unforeseen setback onchain. Additionally, users may unintentionally fund a payment after it completes, which would require a recovery.
+
+2. **Underfunding**
+
+    The user funds the payment's deposit address with the proper token on the proper blockchain however the amount is less than the minimum funding amount indicated by the quote API response. In this case, a recovery is required.
+
+    To handle this case, poll the payment status endpoint.
+
+    ```
+    GET https://v2.prod.halliday.xyz/payments?payment_id=__PAYMENT_ID_HERE__&enable_withdraw_pending=true
+    ```
+
+    Once the API recognizes the issue, the response body will change from the baseline to include the following data (truncated) e.g. Underfunding of 0.2 USDC on Base:
+
+    ```
+    {
+      // ...
+      "funded": true,
+      "issues": [
+        {
+          "kind": "parked_fund",
+          "token": "base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+          "balance": {
+            "#": "200000"
+          },
+          "classification": "UNDERFUNDED",
+          "severity": "HIGH"
+        }
+      ],
+      // ...
+    }
+    ```
+
+    Once the balance is confirmed, a gasless [recovery signature](/pages/api-error-recovery-withdrawal#recoveries) can be created and submitted using the user's wallet and the API.
+
+3. **Funding the deposit address on the wrong chain**
+
+    The user funds the payment's deposit address with the proper token on the wrong blockchain. Supported blockchains are [listed in the documentation](/pages/payment-method-support) and can be fetched from the API. If Halliday does not support the blockchain where the assets were sent, or the token, they cannot be recovered. The API can be used to perceive that a payment is funded on the wrong chain so a front-end application can display a user interface for the user to recover their onchain assets. A recovery can be used to recover the assets.
+
+    To identify which token needs action and which chain it is on, addresses can be queried one at a time.
+
+    ```
+    GET https://v2.prod.halliday.xyz/payments?payment_id=__PAYMENT_ID_HERE__&enable_withdraw_pending=true
+    ```
+
+    The `processing_addresses` array will include the addresses from which supported tokens on supported chains can be recovered.
+
+    ```
+    "processing_addresses": {
+      {
+        "chain": "ethereum",
+        "address": "0x123...",
+        "factory": "0xabc...",
+      }
+    }
+    ```
+
+    To fetch the balance, use the `/balances` [endpoint](/api-reference/payments/get-wallet-balances). This validates that the token and chain are supported and the asset can be recovered.
+
+    ```
+    POST https://v2.prod.halliday.xyz/payments/balances
+
+    {
+      "custom_queries": [
+        {
+          "address": "0x123",
+          "token": "polygon:0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+        }
+      ]
+    }
+    ```
+
+    Expect a response body like this for 1 USDC on Polygon.
+
+    ```
+    {
+        "balance_results": [
+            {
+                "address": "0x123",
+                "token": "polygon:0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+                "withdraw_account": "spw",
+                "withdraw_account": "SPW",
+                "value": {
+                    "kind": "amount",
+                    "amount": "1",
+                    "withdrawal_fee": "0",
+                    "min_withdrawal_amount": "0"
+                }
+            }
+        ],
+        "future_withdrawable_balances": []
+    }
+    ```
+
+    Once the balance that needs action is confirmed, a gasless [recovery signature](/pages/api-error-recovery-withdrawal#recoveries) can be created and submitted using the user's wallet and the API.
+
+4. **Funding the deposit address with the wrong token**
+
+    The user funds the payment's deposit address with the wrong token on any supported blockchain. The Halliday status API response will indicate that a deposit address has been sent the wrong token. The front-end application can then display a user interface for the user to recover their onchain assets. A recovery can be used to recover the assets.
+
+    To handle this case, poll the payment status endpoint.
+
+    ```
+    GET https://v2.prod.halliday.xyz/payments?payment_id=__PAYMENT_ID_HERE__&enable_withdraw_pending=true
+    ```
+
+    Once the API recognizes the issue, the response body will change from the baseline to include the following data (truncated) e.g. Funded incorrectly with 0.00052 ETH on Base:
+
+    ```
+    {
+      // ...
+      "funded": true,
+      "issues": [
+        {
+          "kind": "funding",
+          "token": "base:0x",
+          "balance": {
+            "#": "522459567537567"
+          }
+        },
+        {
+          "kind": "parked_fund",
+          "token": "base:0x",
+          "balance": {
+            "#": "522459567537567"
+          },
+          "classification": "MISSENT",
+          "severity": "HIGH"
+        }
+      ],
+      // ...
+    }
+    ```
+
+    Once the balance that needs action is confirmed, a gasless [recovery signature](/pages/api-error-recovery-withdrawal#recoveries) can be created and submitted using the user's wallet and the API.
+
+5. **Funding an expired payment**
+
+    The user has funded an expired payment's deposit address. This payment will not execute because the initial quote is considered stale. The Halliday status API response will indicate the payment's `EXPIRED` status. The front-end application can then display a user interface for the user to recover their onchain assets. A common pattern for this use case is to query the [balance](/api-reference/payments/get-wallet-balances) of all recent payments via the Halliday API when the user navigates to a payment history page in an app.
+
+6. **A funded payment fails to complete and requires action** (live testing not possible, general recovery implementations need to handle this scenario)
+
+    During payment execution, the payment fails to complete due to unforeseen onchain circumstances. The Halliday status API response will indicate the payment's `FAILED` status as well as the token type, location, and amount. The front-end application can then display a user interface for the user to recover their onchain assets. A recovery can be used to recover the assets.

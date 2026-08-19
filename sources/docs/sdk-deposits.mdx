@@ -116,3 +116,30 @@ To display the deposit widget, use the `openDeposit` function.
     ```
   </Tab>
 </Tabs>
+
+### Deposit session parameters
+
+A deposit session can optionally have values passed to it such as a preset input asset and amount, a preset output asset, a funding address, or a destination address.
+
+If the developer does not want for the user to be able to modify the asset setting or input amount, they can lock the session to the developer's chosen settings.
+
+An `input` will take precedent over the `inputFiatValue` settings.
+
+```js
+openDeposit({
+  input: {
+    asset: "base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+    amount: "50",
+  },
+  output: "base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+  inputFiatValue: {
+    currency: "USD",
+    amount: "50",
+  },
+  fundingAddress: "0xFunder...",
+  destination: "0xDest...",
+  locked: true,
+});
+```
+
+See the [type definitions](/pages/payments-sdk-docs#type-definitions) on the SDK documentation page for more information.

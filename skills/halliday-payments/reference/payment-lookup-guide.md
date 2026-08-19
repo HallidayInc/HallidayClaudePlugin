@@ -98,7 +98,7 @@ The payment requires owner verification before it can proceed to PENDING.
 **What to show:**
 - The `next_instruction` will have `type: "USER_VERIFY"` with payloads to sign
 - The user must sign verification payloads and submit them back to `POST /payments/confirm`
-- If the user abandons, the payment is not persisted and a new quote is needed
+- If the user abandons before completing verification, the payment remains `UNCONFIRMED`. A new quote is only needed once the quote expires.
 
 ### FAILED
 A workflow step failed during execution.
@@ -150,7 +150,7 @@ The response contains a `balance_results` array. Each entry has:
 - `address` — the OTW address
 - `token` — the token held (format: `chain:address`)
 - `withdraw_account` — account the balance would be withdrawn from (`INTENT` or `SPW`, defaults to `SPW`)
-- `value` — either `{ kind: "amount", amount: "50.0", withdrawal_fee: "0.5" }` or `{ kind: "error" }`
+- `value` — either `{ kind: "amount", amount: "50.0", withdrawal_fee: "0.5", min_withdrawal_amount: "1.0" }` or `{ kind: "error" }`. `withdrawal_fee` and `min_withdrawal_amount` are nullable.
 
 ### Step 2: Interpret balances
 
@@ -166,12 +166,12 @@ If recoverable funds exist, the developer has two options:
 **Option A: Retry the payment**
 1. Get new quotes: `POST /payments/quotes` with `parent_payment_id` set to the failed payment's ID
 2. User selects a quote and it's confirmed via `POST /payments/confirm`
-3. Withdraw from old OTW to new OTW: `POST /payments/withdraw` with `recipient_address` as the new payment's deposit address
+3. Withdraw from old OTW to new OTW: `POST /payments/withdraw` with `payment_id` as the parked-funds payment's ID (not the new one) and `recipient_address` as the new payment's deposit address
 4. Sign the withdrawal authorization based on `signature_type` (`EIP712` — parse `withdraw_authorization` as JSON and sign with `signTypedData`; `EIP191` — sign the string directly with `signMessage`)
 5. Confirm: `POST /payments/withdraw/confirm`
 
 **Option B: Withdraw to owner wallet**
-1. `POST /payments/withdraw` with `recipient_address` as the owner's wallet address
+1. `POST /payments/withdraw` with `payment_id` as the parked-funds payment's ID and `recipient_address` as the owner's wallet address
 2. Sign the withdrawal authorization
 3. `POST /payments/withdraw/confirm`
 

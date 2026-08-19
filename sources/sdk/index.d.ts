@@ -36,6 +36,15 @@ declare const TransactionReceipt: z.ZodObject<{
     rawReceipt: z.ZodAny;
 }, z.core.$strip>;
 type TransactionReceipt = z.infer<typeof TransactionReceipt>;
+declare const SolTransactionRequest: z.ZodObject<{
+    from: z.ZodString;
+    serializedTransaction: z.ZodString;
+}, z.core.$strip>;
+type SolTransactionRequest = z.infer<typeof SolTransactionRequest>;
+declare const SolTransactionReceipt: z.ZodObject<{
+    signature: z.ZodString;
+}, z.core.$strip>;
+type SolTransactionReceipt = z.infer<typeof SolTransactionReceipt>;
 declare const EVMChainConfig: z.ZodObject<{
     chain_id: z.ZodBigInt;
     network: z.ZodString;
@@ -51,6 +60,15 @@ declare const EVMChainConfig: z.ZodObject<{
     rpc: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;
 type EVMChainConfig = z.infer<typeof EVMChainConfig>;
+declare const SolChainConfig: z.ZodObject<{
+    chain_id: z.ZodBigInt;
+    network: z.ZodString;
+    explorer: z.ZodOptional<z.ZodURL>;
+    image: z.ZodOptional<z.ZodURL>;
+    is_testnet: z.ZodBoolean;
+    address_family: z.ZodLiteral<"SOL">;
+}, z.core.$strip>;
+type SolChainConfig = z.infer<typeof SolChainConfig>;
 
 type TypedData = string;
 declare const WindowType: z.ZodEnum<{
@@ -117,6 +135,11 @@ declare const WalletAuthChain: z.ZodEnum<{
     SUI: "SUI";
 }>;
 type WalletAuthChain = z.infer<typeof WalletAuthChain>;
+declare const WalletVm: z.ZodEnum<{
+    EVM: "EVM";
+    SOL: "SOL";
+}>;
+type WalletVm = z.infer<typeof WalletVm>;
 type SignAuthMessage = (input: {
     message: string;
     address: Address;
@@ -128,6 +151,7 @@ type WalletActionsType = {
     signMessage: SignMessage;
     sendTransaction: SendTransaction;
     signTypedData: SignTypedData;
+    walletType?: WalletVm;
 };
 type StatusCallback = (input: {
     type: string;
@@ -184,6 +208,10 @@ declare const WalletMeta: z.ZodObject<{
         recover: "recover";
         withdraw: "withdraw";
     }>>;
+    walletType: z.ZodCatch<z.ZodOptional<z.ZodEnum<{
+        EVM: "EVM";
+        SOL: "SOL";
+    }>>>;
 }, z.core.$strip>;
 type WalletMeta = z.infer<typeof WalletMeta>;
 declare const UserWalletFunderDisplay: z.ZodEnum<{
@@ -229,12 +257,32 @@ declare const PaymentsWidgetSDKParamsWithoutRolesAndFunctions: z.ZodObject<{
     destinationAddress: z.ZodOptional<z.ZodString>;
     withdrawDestinationAddress: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;
-type FunderRole = Omit<WalletActionsType, "signTypedData" | "signMessage"> & {
+type SolSendTransaction = (transaction: SolTransactionRequest, chainConfig: SolChainConfig) => Promise<SolTransactionReceipt>;
+/**
+ * EVM funder. NARROWS the inherited `WalletActionsType["walletType"]` to the literal, which is what
+ * keeps `FunderRole` a usable discriminated union — with the base's `WalletVm` left unnarrowed,
+ * `Extract<FunderRole, { walletType: "SOL" }>` resolves to `never`. Still OPTIONAL so existing
+ * untagged host code typechecks.
+ */
+type EvmFunderRole = Omit<WalletActionsType, "signTypedData" | "signMessage"> & {
+    walletType?: "EVM";
     walletName?: string;
+};
+/** SOL funder. The tag is REQUIRED — it is what discriminates the union. */
+type SolFunderRole = {
+    walletType: "SOL";
+    getAddress: () => Promise<Address>;
+    sendTransaction: SolSendTransaction;
+    walletName?: string;
+};
+type FunderRole = EvmFunderRole | SolFunderRole;
+type EvmWalletRole = WalletActionsType & {
+    walletType: "EVM";
 };
 type OwnerRole = Omit<WalletActionsType, "sendTransaction"> & {
     sendTransaction?: SendTransaction;
     walletName?: string;
+    walletType?: "EVM";
 };
 type Owner = ({
     type?: "direct";
@@ -287,6 +335,10 @@ declare const PaymentsWidgetSDKParams: z.ZodObject<{
         sendTransaction: z.ZodOptional<z.ZodAny>;
         signTypedData: z.ZodOptional<z.ZodAny>;
         walletName: z.ZodOptional<z.ZodString>;
+        walletType: z.ZodCatch<z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodEnum<{
+            EVM: "EVM";
+            SOL: "SOL";
+        }>>>>;
     }, z.core.$strip>>;
     funders: z.ZodOptional<z.ZodArray<z.ZodObject<{
         getAddress: z.ZodAny;
@@ -294,6 +346,10 @@ declare const PaymentsWidgetSDKParams: z.ZodObject<{
         sendTransaction: z.ZodOptional<z.ZodAny>;
         signTypedData: z.ZodOptional<z.ZodAny>;
         walletName: z.ZodOptional<z.ZodString>;
+        walletType: z.ZodCatch<z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodEnum<{
+            EVM: "EVM";
+            SOL: "SOL";
+        }>>>>;
     }, z.core.$strip>>>;
     owner: z.ZodOptional<z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodDiscriminatedUnion<[z.ZodObject<{
         getAddress: z.ZodAny;
@@ -301,6 +357,10 @@ declare const PaymentsWidgetSDKParams: z.ZodObject<{
         sendTransaction: z.ZodOptional<z.ZodAny>;
         signTypedData: z.ZodOptional<z.ZodAny>;
         walletName: z.ZodOptional<z.ZodString>;
+        walletType: z.ZodCatch<z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodEnum<{
+            EVM: "EVM";
+            SOL: "SOL";
+        }>>>>;
         type: z.ZodLiteral<"direct">;
     }, z.core.$strip>, z.ZodObject<{
         type: z.ZodLiteral<"wallet-auth">;
@@ -322,6 +382,10 @@ declare const PaymentsWidgetSDKParams: z.ZodObject<{
         sendTransaction: z.ZodOptional<z.ZodAny>;
         signTypedData: z.ZodOptional<z.ZodAny>;
         walletName: z.ZodOptional<z.ZodString>;
+        walletType: z.ZodCatch<z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodEnum<{
+            EVM: "EVM";
+            SOL: "SOL";
+        }>>>>;
     }, z.core.$strip>>;
     withdrawDestinationAddress: z.ZodOptional<z.ZodString>;
     onReady: z.ZodOptional<z.ZodAny>;
@@ -425,6 +489,10 @@ declare const PaymentsWidgetQueryParams: z.ZodObject<{
             recover: "recover";
             withdraw: "withdraw";
         }>>;
+        walletType: z.ZodCatch<z.ZodOptional<z.ZodEnum<{
+            EVM: "EVM";
+            SOL: "SOL";
+        }>>>;
     }, z.core.$strip>>>;
     onramps: z.ZodOptional<z.ZodArray<z.ZodString>>;
     offramps: z.ZodOptional<z.ZodArray<z.ZodString>>;
@@ -485,9 +553,9 @@ declare enum MessageType {
 type Message = {
     type: MessageType.ACTION_TRANSACTION;
     payload: {
-        transaction: TransactionRequest;
+        transaction: TransactionRequest | SolTransactionRequest;
         messageId: string;
-        chainConfig: EVMChainConfig;
+        chainConfig: EVMChainConfig | SolChainConfig;
     };
 } | {
     type: MessageType.EVENT_ORDER_STATUS;
@@ -548,7 +616,7 @@ type MessageResponse = {
     type: MessageType.ACTION_TRANSACTION;
     payload: {
         messageId: string;
-        txReceipt: TransactionReceipt;
+        txReceipt: TransactionReceipt | SolTransactionReceipt;
         error: null;
     } | {
         messageId: string;
@@ -887,5 +955,5 @@ declare const getPaymentsWidgetUrl: (params: PaymentsWidgetQueryParams & {
  */
 declare const mergeParams: <T extends Record<string, unknown>>(prev: T, next: Partial<T>) => T;
 
-export { Address, AppMode, BackgroundStyle, BorderStyle, CssFontSize, CustomStyles, FeeSponsorshipGrant, FontName, HallidayPayments, HeaderTitle, MessageType, OrderNotification, OrderStatus, OwnerMeta, PaymentDirection, PaymentFlowType, PaymentSession, PaymentsWidgetQueryParams, PaymentsWidgetSDKParams, UserWalletFunderDisplay, WalletAuthChain, WalletMeta, WidgetLoadError, WidgetLoadFailureReason, WindowType, HallidayPayments as default, deserializeQueryParams, getPaymentsWidgetUrl, mergeParams, serializeQueryParams };
-export type { DangerousOverrides, DepositConfig, FeatureFlags, FeeSponsorshipConfig, FunderRole, HallidayErrorSource, HallidayEvent, HallidayEventHandler, HallidayPaymentsConfig, HallidayRuntimeError, HallidaySnapshot, Message, MessageResponse, Owner, OwnerRole, SendTransaction, SignAuthMessage, SignMessage, SignTypedData, WalletActionsType, WidgetLoadDiagnostics, WithdrawalConfig };
+export { Address, AppMode, BackgroundStyle, BorderStyle, CssFontSize, CustomStyles, FeeSponsorshipGrant, FontName, HallidayPayments, HeaderTitle, MessageType, OrderNotification, OrderStatus, OwnerMeta, PaymentDirection, PaymentFlowType, PaymentSession, PaymentsWidgetQueryParams, PaymentsWidgetSDKParams, UserWalletFunderDisplay, WalletAuthChain, WalletMeta, WalletVm, WidgetLoadError, WidgetLoadFailureReason, WindowType, HallidayPayments as default, deserializeQueryParams, getPaymentsWidgetUrl, mergeParams, serializeQueryParams };
+export type { DangerousOverrides, DepositConfig, EvmFunderRole, EvmWalletRole, FeatureFlags, FeeSponsorshipConfig, FunderRole, HallidayErrorSource, HallidayEvent, HallidayEventHandler, HallidayPaymentsConfig, HallidayRuntimeError, HallidaySnapshot, Message, MessageResponse, Owner, OwnerRole, SendTransaction, SignAuthMessage, SignMessage, SignTypedData, SolFunderRole, SolSendTransaction, WalletActionsType, WidgetLoadDiagnostics, WithdrawalConfig };

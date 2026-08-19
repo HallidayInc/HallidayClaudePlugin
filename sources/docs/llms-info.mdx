@@ -17,8 +17,26 @@ The `/halliday` command with a guided menu of flows:
 The Halliday Claude Code plugin is now available in the [Anthropic community marketplace](https://github.com/anthropics/claude-plugins-community). After installing Claude Code on the command line, add the plugin using the Anthropic community marketplace:
 
 ```
+## official community marketplace
 claude plugin marketplace add anthropics/claude-plugins-community
+
+## OR from our marketplace, version updated more frequently
+claude plugin marketplace add halliday
+
 claude plugin install halliday-payments
+```
+
+If already installed, update the plugin with this command:
+```
+## From a shell
+claude plugin update halliday-payments@claude-community
+## OR
+claude plugin update halliday-payments@halliday
+
+## From within the Claude Code CLI
+/plugin update halliday-payments@claude-community
+## OR
+/plugin update halliday-payments@halliday
 ```
 
 To work on a personalized fork, the plugin can be utilized in development mode using git and these commands:

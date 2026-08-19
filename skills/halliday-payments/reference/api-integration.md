@@ -34,7 +34,7 @@ Use `Grep` on `${CLAUDE_PLUGIN_ROOT}/sources/api/openapi.yaml` to find the relev
 
 ## Authentication
 
-All API requests require a Halliday public API key. Create a free account at https://dashboard.halliday.xyz/ to get one, or email partnerships@halliday.xyz as a backup option.
+All API requests require a Halliday API key. Most endpoints use a public key (`pk_...`); webhook management endpoints under `/orgs/webhooks` require a secret key (`sk_...`). Create a free account at https://dashboard.halliday.xyz/ to get one, or email partnerships@halliday.xyz as a backup option.
 
 ## Supported Chains and Assets
 
