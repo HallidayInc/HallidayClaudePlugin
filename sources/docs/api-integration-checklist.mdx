@@ -16,6 +16,8 @@ Integrations that implement the Halliday API directly should utilize this checkl
 
 3. Quotes, even [confirmed](/api-reference/payments/confirm-a-payment) ones, that are not executed within a few minutes are safely abandoned in an app's user interface in favor of generating a new quote with the latest prices. The time period before a non-funded payment becomes considered stale is approximately 5 minutes after the quote is made (response body `quoted_at`) and is indicated by the `accept_by` response body parameter.
 
+    Unfunded quotes will go from `PENDING` to `EXPIRED` roughly 8 to 10 hours after they are created. Onramp payments using slower bank rails have longer windows: wire 1 to 2 days, ACH 2 to 3 days, and SWIFT 3 to 4 days. Ideally, a quote should be funded before the `accept_by` time. A quote can be funded after `accept_by` and before it becomes `EXPIRED` however it may not properly execute due to onchain price movements since the quote creation.
+
 ### Fees
 
 4. Fees are presented to the user (seen as "Price Impact" in the [Halliday Widget](https://demo.halliday.xyz/)). These fees include gas fees, DEX slippage, bridge fees, and optionally a revenue share fee.
@@ -96,20 +98,26 @@ For each of the paths described, a "recovery" refers to the recovery process des
             "#": "200000"
           },
           "classification": "UNDERFUNDED",
-          "severity": "HIGH"
+          "severity": "HIGH",
+          "payment_gist": null,
+          "withdraw_from": {
+            "withdraw_type": "PAYMENT",
+            "payment_id": "__PAYMENT_ID_HERE__",
+            "withdraw_account": "INTENT"
+          }
         }
       ],
       // ...
     }
     ```
 
-    Once the balance is confirmed, a gasless [recovery signature](/pages/api-error-recovery-withdrawal#recoveries) can be created and submitted using the user's wallet and the API.
+    Once the balance is confirmed, a gasless [recovery signature](/pages/api-error-recovery-withdrawal#recoveries) can be created and submitted using the user's wallet and the API. Pass the issue's `withdraw_from` object through unchanged to `POST /payments/withdraw`. The `withdraw_from` property on a `parked_fund` issue can be `null`. If it is `null`, the funds can't be withdrawn yet.
 
 3. **Funding the deposit address on the wrong chain**
 
     The user funds the payment's deposit address with the proper token on the wrong blockchain. Supported blockchains are [listed in the documentation](/pages/payment-method-support) and can be fetched from the API. If Halliday does not support the blockchain where the assets were sent, or the token, they cannot be recovered. The API can be used to perceive that a payment is funded on the wrong chain so a front-end application can display a user interface for the user to recover their onchain assets. A recovery can be used to recover the assets.
 
-    To identify which token needs action and which chain it is on, addresses can be queried one at a time.
+    To identify which token needs action and which chain it is on, fetch the payment status, then query its balances.
 
     ```
     GET https://v2.prod.halliday.xyz/payments?payment_id=__PAYMENT_ID_HERE__&enable_withdraw_pending=true
@@ -118,29 +126,36 @@ For each of the paths described, a "recovery" refers to the recovery process des
     The `processing_addresses` array will include the addresses from which supported tokens on supported chains can be recovered.
 
     ```
-    "processing_addresses": {
+    "processing_addresses": [
       {
         "chain": "ethereum",
         "address": "0x123...",
-        "factory": "0xabc...",
+        "factory": "0xabc..."
       }
-    }
+    ]
     ```
 
-    To fetch the balance, use the `/balances` [endpoint](/api-reference/payments/get-wallet-balances). This validates that the token and chain are supported and the asset can be recovered.
+    To fetch the balance, use the `/balances` [endpoint](/api-reference/payments/get-wallet-balances) with the payment's `owner_address` and `payment_id`, and list the tokens to check. The API derives the payment's deposit address on each token's chain, including a chain that is not in `processing_addresses`, and returns a `withdraw_from` object that can be passed to the withdraw endpoint. This validates that the token and chain are supported and the asset can be recovered.
 
     ```
     POST https://v2.prod.halliday.xyz/payments/balances
 
     {
-      "custom_queries": [
-        {
-          "address": "0x123",
-          "token": "polygon:0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
-        }
-      ]
+      "query": {
+        "source": "OWNER",
+        "owner": "0xowner...",
+        "scope": {
+          "kind": "PAYMENT",
+          "payment_id": "__PAYMENT_ID_HERE__"
+        },
+        "tokens": [
+          "polygon:0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+        ]
+      }
     }
     ```
+
+    The `tokens` array is optional. When it is omitted, the API only checks the tokens and chains that are part of the payment's own route, so a deposit made with a different token or on a different chain will not be found. Pass `tokens` explicitly to check for a specific token. Present the user with an interface to select a single chain and a single token to query, since checking one chain and token is more efficient than a broad query.
 
     Expect a response body like this for 1 USDC on Polygon.
 
@@ -150,14 +165,18 @@ For each of the paths described, a "recovery" refers to the recovery process des
             {
                 "address": "0x123",
                 "token": "polygon:0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
-                "withdraw_account": "spw",
-                "withdraw_account": "SPW",
                 "value": {
                     "kind": "amount",
                     "amount": "1",
-                    "withdrawal_fee": "0",
-                    "min_withdrawal_amount": "0"
-                }
+                    "withdrawal_fee": null,
+                    "min_withdrawal_amount": null
+                },
+                "withdraw_from": {
+                    "withdraw_type": "PAYMENT",
+                    "payment_id": "__PAYMENT_ID_HERE__",
+                    "withdraw_account": "SPW"
+                },
+                "payment_gist": null
             }
         ],
         "future_withdrawable_balances": []
@@ -197,14 +216,20 @@ For each of the paths described, a "recovery" refers to the recovery process des
             "#": "522459567537567"
           },
           "classification": "MISSENT",
-          "severity": "HIGH"
+          "severity": "HIGH",
+          "payment_gist": null,
+          "withdraw_from": {
+            "withdraw_type": "PAYMENT",
+            "payment_id": "__PAYMENT_ID_HERE__",
+            "withdraw_account": "INTENT"
+          }
         }
       ],
       // ...
     }
     ```
 
-    Once the balance that needs action is confirmed, a gasless [recovery signature](/pages/api-error-recovery-withdrawal#recoveries) can be created and submitted using the user's wallet and the API.
+    Once the balance that needs action is confirmed, a gasless [recovery signature](/pages/api-error-recovery-withdrawal#recoveries) can be created and submitted using the user's wallet and the API. Pass the issue's `withdraw_from` object through unchanged to `POST /payments/withdraw`.
 
 5. **Funding an expired payment**
 

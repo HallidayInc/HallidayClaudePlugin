@@ -48,7 +48,7 @@ const res = await fetch('https://v2.prod.halliday.xyz/payments/quotes', {
       },
       output_asset: outputAsset,
     },
-    price_currency: 'USD',
+    price_currency: 'usd',
     onramps,
     onramp_methods: fiatOnrampPayInMethods,
     customer_geolocation: { alpha3_country_code: 'USA' }
@@ -56,7 +56,7 @@ const res = await fetch('https://v2.prod.halliday.xyz/payments/quotes', {
 });
 ```
 
-Once the user selects a quote and destination address in the user interface, clicking or tapping the Continue button confirms the quote with the API.
+Once the user selects a quote in the user interface, clicking or tapping the Continue button confirms the quote with the API. The connected wallet is used as both the owner and destination address.
 
 ```js
 // From acceptQuote function
@@ -70,8 +70,8 @@ const res = await fetch('https://v2.prod.halliday.xyz/payments/confirm', {
   body: JSON.stringify({
     payment_id: selectedQuote.paymentId,
     state_token: selectedQuote.stateToken,
-    owner_address: destinationAddress,
-    destination_address: destinationAddress
+    owner_address: userAddress,
+    destination_address: userAddress
   })
 });
 ```
@@ -341,26 +341,33 @@ do {
 } while (paginationKey)
 ```
 
-Next, after filtering out properly completed payments, the balance of failed or expired payments is queried using the API one by one. This endpoint will get the current token balances for all of the payment's processing addresses on the relevant chains and return the data in the response.
+Next, after filtering out properly completed payments, the balance of failed or expired payments is queried using the API one by one. This endpoint will get the current token balances for the payment's deposit addresses on the relevant chains and return the data in the response.
 
 ```js
-  async function getProcessingAddressBalances(paymentId) {
-    try {
-      const res = await fetch(`https://v2.prod.halliday.xyz/payments/balances`, {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + HALLIDAY_API_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ payment_id: paymentId })
-      });
+async function getProcessingAddressBalances(ownerAddress, paymentId) {
+  try {
+    const res = await fetch(`https://v2.prod.halliday.xyz/payments/balances`, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + HALLIDAY_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        query: {
+          source: 'OWNER',
+          owner: ownerAddress,
+          scope: { kind: 'PAYMENT', payment_id: paymentId }
+        }
+      })
+    });
 
-      const data = await res.json();
-      return data;
-    } catch (e) {
-      console.error('getProcessingAddressBalances error', e);
-    }
+    const data = await res.json();
+    if (data.errors) throw Error(JSON.stringify(data.errors));
+    return data;
+  } catch (e) {
+    console.error('getProcessingAddressBalances error', e);
   }
+}
 ```
 
 Relevant payment information is rendered in the UI for the user. The user can tap or click buttons to initialize the withdrawal flow for each individual stuck token balance.
@@ -369,7 +376,7 @@ Initializing the withdrawal flow has three steps:
 
 1. Get the EIP-712 data from the API (`getTypedData`) which is used to sign a transaction to withdraw the token from the processing address.
 2. The transaction is signed (`signTypedData`) with the user wallet using Ethers on the client.
-3. The signed transaction data is then sent to the API (`confirmWithdrawal`) to confirm the withdrawal and execute it onchain. The API returns the onchain transaction hash in the response body.
+3. The signature, along with the `state_token` from step 1, is then sent to the API (`confirmWithdrawal`) to confirm the withdrawal and execute it onchain. The API waits briefly for the withdrawal to land. If it is still `PENDING`, `transaction_hash` is null, so poll the withdraw status endpoint (`getWithdrawStatus`) with the returned `withdraw_id` every 5 seconds until the status is no longer `PENDING`.
 
 ```js
 withdrawButton.addEventListener('click', async () => {
@@ -377,7 +384,11 @@ withdrawButton.addEventListener('click', async () => {
 
   // Fetch the withdraw signature data from the API
   const withdrawToAddress = userAddress; // user's connected wallet
-  const typedDataToSign = await getTypedData(withdrawToAddress, paymentId, balance.token, balance.value.amount);
+  const withdrawFrom = balance.withdraw_from;
+  const token = balance.token;
+  const amount = balance.value.amount;
+
+  const typedDataToSign = await getTypedData(withdrawToAddress, withdrawFrom, token, amount);
   const { domain, types, message } = JSON.parse(typedDataToSign.withdraw_authorization);
   delete types.EIP712Domain;
 
@@ -386,15 +397,25 @@ withdrawButton.addEventListener('click', async () => {
   const signer = await provider.getSigner();
   const signature = await signer.signTypedData(domain, types, message);
 
-  // Send signature to API to be posted onchain
-  const txHash = await confirmWithdrawal(withdrawToAddress, paymentId, balance.token, balance.value.amount, signature);
+  // Send signature and state token to API to be posted onchain
+  let withdrawal = await confirmWithdrawal(signature, typedDataToSign.state_token);
+
+  // Poll every 5 seconds until the withdrawal lands onchain
+  while (withdrawal.status === 'PENDING') {
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    withdrawal = await getWithdrawStatus(withdrawal.withdraw_id);
+  }
 
   // Show the resulting withdraw transaction on the proper block explorer
   const chain = balance.token.split(':')[0];
   const { explorer } = supportedChains[chain];
   const link = item.querySelector('a');
-  link.setAttribute('href', `${explorer}tx/${txHash}`);
-  link.classList.remove('hidden');
+  if (withdrawal.status === 'SUCCESS') {
+    link.setAttribute('href', `${explorer}tx/${withdrawal.transaction_hash}`);
+    link.classList.remove('hidden');
+  } else {
+    console.error('Status of withdrawal is not SUCCESS:', withdrawal);
+  }
 
   withdrawButton.disabled = true;
   withdrawButton.classList.remove('loading');
@@ -442,7 +463,7 @@ Once the user accepts a quote available to retry the payment, the following four
 1. Use the API endpoint to accept the new quote (see `acceptQuote`). This is the same endpoint used to accept quotes in onramps and swaps.
 2. Fetch the withdrawal signature data from the API (see `getTypedData`). This transaction will transfer tokens from the **old** payment to the **new** payment once it is executed onchain. This is the same gas-sponsored transaction concept explained in the above **withdraw** example.
 3. The transaction is signed (`signTypedData`) with the user wallet using Ethers on the client.
-4. The signed transaction data is then sent to the API (`confirmWithdrawal`) to confirm the token transfer from the old payment to the new payment. The API then executes this transaction onchain covering all of the blockchain gas costs.
+4. The signature, along with the `state_token` from step 2, is then sent to the API (`confirmWithdrawal`) to confirm the token transfer from the old payment to the new payment. The API then executes this transaction onchain covering all of the blockchain gas costs.
 
 ```js
 // Accept the retry quote
@@ -452,7 +473,7 @@ statusElement.innerText = `Status: ${acceptQuoteRequest.status}...`;
 
 // Fetch the retry signature data from the API
 const withdrawToAddress = acceptQuoteRequest.next_instruction.deposit_info[0].deposit_address; // new quoted payment's deposit address
-const typedDataToSign = await getTypedData(withdrawToAddress, paymentId, balance.token, balance.value.amount);
+const typedDataToSign = await getTypedData(withdrawToAddress, balance.withdraw_from, balance.token, balance.value.amount);
 const { domain, types, message } = JSON.parse(typedDataToSign.withdraw_authorization);
 delete types.EIP712Domain;
 
@@ -462,7 +483,7 @@ const signer = await provider.getSigner();
 const signature = await signer.signTypedData(domain, types, message);
 
 // Send signature to API to be posted onchain
-await confirmWithdrawal(withdrawToAddress, paymentId, balance.token, balance.value.amount, signature);
+await confirmWithdrawal(signature, typedDataToSign.state_token);
 ```
 The new payment ID can subsequently be tracked. The new payment will reach the `COMPLETE` state once the output tokens have reached the destination address.
 

@@ -29,14 +29,19 @@ Effectively, a new payment is created and then funded using the interrupted paym
 **Retry a payment using the API**
 
 - A funded payment is not completing.
-- Query the [balances API endpoint](/api-reference/payments/get-wallet-balances) (`POST /payments/balances`) and pass the incomplete payment ID which we will call failed `payment_id`. This returns the deposit address (`address`), the balance, and the `withdraw_account` type. Check that the balance is greater than zero. If so, a recovery can be performed. Entries with `value.kind` of `error` indicate a balance lookup failure and should be skipped. When displaying the estimated output to the user, use `amount - withdrawal_fee` (the net amount). When calling the withdraw endpoint, use the full `amount`.
+- Query the [balances API endpoint](/api-reference/payments/get-wallet-balances) (`POST /payments/balances`) with an `OWNER` query scoped to the incomplete payment, which we will call the failed `payment_id`:
+  - `query.source`: `OWNER`
+  - `query.owner`: The payment's owner address.
+  - `query.scope`: `{ "kind": "PAYMENT", "payment_id": "<failed payment_id>" }`
+  - `query.tokens` (optional): The token(s) to check. When omitted, only the tokens and chains on the payment's own route are checked, so pass the specific token to look for.
+
+  Each entry in `balance_results` returns the deposit address (`address`), the `token`, the balance (`value`), and a `withdraw_from` object. Check that the balance is greater than zero. If so, a recovery can be performed. Entries with `value.kind` of `error` indicate a balance lookup failure and should be skipped. When displaying the estimated output to the user, use `amount - withdrawal_fee` (the net amount). A `withdrawal_fee` of `null` means no fee applies, so the net amount is the full `amount`. If `min_withdrawal_amount` is set and `amount` is below it, the balance cannot be withdrawn yet; `null` means no minimum applies. When calling the withdraw endpoint, always use the full `amount`.
 - [Get new quotes](/api-reference/payments/get-payment-quotes) using `POST /payments/quotes`. Provide the failed `payment_id` as `parent_payment_id` in the request body.
 - Once the user selects a quote, [confirm the new quote](/api-reference/payments/confirm-a-payment) using `POST /payments/confirm`. To do this, pass the new quote's payment ID, which we will call new `payment_id`, to the confirm endpoint. Also, `state_token`, `owner_address`, and `destination_address` are required parameters for the confirm endpoint.
 - Next call the [withdraw endpoint](/api-reference/payments/return-funds-to-owner-or-retry-payment) (`POST /payments/withdraw`) with the parameters:
-  - `payment_id`: The failed payment's ID.
-  - `token_amounts`: The returned amount of token from the prior `POST /payments/balances` endpoint call.
+  - `withdraw_from`: The `withdraw_from` object from the balance result, passed through exactly as returned.
+  - `token_amounts`: The `token` and full `amount` from the prior `POST /payments/balances` endpoint call.
   - `recipient_address`: The address of the new payment's deposit address.
-  - `withdraw_account`: The `withdraw_account` value from the balance result (`INTENT` or `SPW`).
 - The response includes a `signature_type` field (`EIP712` or `EIP191`) and a `withdraw_authorization` string. The owner wallet must sign this authorization:
   - If `signature_type` is `EIP712`: Parse `withdraw_authorization` as JSON and sign using `signTypedData`.
   - If `signature_type` is `EIP191`: Sign the `withdraw_authorization` string directly using `signMessage`.
@@ -49,12 +54,17 @@ Assets lingering in a deposit address can be withdrawn to any address specified 
 **Withdrawal steps using the API**
 
 - A funded payment is not completing.
-- Query the [balances API endpoint](/api-reference/payments/get-wallet-balances) (`POST /payments/balances`) and pass the incomplete payment ID which we will call failed `payment_id`. This returns the deposit address (`address`), the balance, and the `withdraw_account` type. Check that the balance is greater than zero. If so, a recovery can be performed. Entries with `value.kind` of `error` indicate a balance lookup failure and should be skipped. When displaying the estimated output to the user, use `amount - withdrawal_fee` (the net amount). When calling the withdraw endpoint, use the full `amount`.
+- Query the [balances API endpoint](/api-reference/payments/get-wallet-balances) (`POST /payments/balances`) with an `OWNER` query scoped to the incomplete payment, which we will call the failed `payment_id`:
+  - `query.source`: `OWNER`
+  - `query.owner`: The payment's owner address.
+  - `query.scope`: `{ "kind": "PAYMENT", "payment_id": "<failed payment_id>" }`
+  - `query.tokens` (optional): The token(s) to check. When omitted, only the tokens and chains on the payment's own route are checked, so pass the specific token to look for.
+
+  Each entry in `balance_results` returns the deposit address (`address`), the `token`, the balance (`value`), and a `withdraw_from` object. Check that the balance is greater than zero. If so, a recovery can be performed. Entries with `value.kind` of `error` indicate a balance lookup failure and should be skipped. When displaying the estimated output to the user, use `amount - withdrawal_fee` (the net amount). A `withdrawal_fee` of `null` means no fee applies, so the net amount is the full `amount`. If `min_withdrawal_amount` is set and `amount` is below it, the balance cannot be withdrawn yet; `null` means no minimum applies. When calling the withdraw endpoint, always use the full `amount`.
 - Next call the [withdraw endpoint](/api-reference/payments/return-funds-to-owner-or-retry-payment) (`POST /payments/withdraw`) with the parameters:
-  - `payment_id`: The failed payment's ID.
-  - `token_amounts`: The returned amount of token from the prior `POST /payments/balances` endpoint call.
+  - `withdraw_from`: The `withdraw_from` object from the balance result, passed through exactly as returned.
+  - `token_amounts`: The `token` and full `amount` from the prior `POST /payments/balances` endpoint call.
   - `recipient_address`: The address to withdraw the tokens to, usually the owner's wallet.
-  - `withdraw_account`: The `withdraw_account` value from the balance result (`INTENT` or `SPW`).
 - The response includes a `signature_type` field (`EIP712` or `EIP191`) and a `withdraw_authorization` string. The owner wallet must sign this authorization:
   - If `signature_type` is `EIP712`: Parse `withdraw_authorization` as JSON and sign using `signTypedData`.
   - If `signature_type` is `EIP191`: Sign the `withdraw_authorization` string directly using `signMessage`.

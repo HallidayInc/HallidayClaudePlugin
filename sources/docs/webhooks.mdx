@@ -17,6 +17,21 @@ A webhook fires when a workflow reaches a terminal state:
 
 You choose which of these events to subscribe to when you register the webhook. Each delivery is an HTTP `POST` with a JSON body and an `X-Halliday-Signature` header you can use to verify it came from Halliday.
 
+The `event` object in the body contains the `workflow_id`, the terminal `status`, and the payment's `tags` (if any were set). See [payment tags](/pages/api-status#payment-tags) for how to set them.
+
+```json
+{
+  "id": "9555b9ed-1d0c-47ad-9e41-056fb4fe087e",
+  "time": "2026-06-22T18:04:11.000Z",
+  "event_type": "WORKFLOW_COMPLETED",
+  "event": {
+    "workflow_id": "e050f684-7b3d-407a-98e7-5dfe11860317",
+    "status": "COMPLETE",
+    "tags": ["string1", "string2"]
+  }
+}
+```
+
 ## Authentication
 
 Managing webhooks requires your **secret API key** (`sk_...`), not a public key (`pk_...`). Public keys cannot manage webhooks.

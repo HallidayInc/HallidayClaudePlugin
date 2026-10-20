@@ -321,17 +321,6 @@ paths:
             type: array
             items:
               type: string
-        - name: features[]
-          in: query
-          required: false
-          description: Feature flags to enable additional asset edges
-          style: form
-          explode: true
-          schema:
-            type: array
-            items:
-              type: string
-              enum: [BETA_EDGES, ORG_BETA_EDGES, ORG_EDGES]
       responses:
         "200":
           description: Available output assets grouped by input
@@ -389,6 +378,109 @@ paths:
                 errors:
                   - kind: other
                     message: "Your account does not have access to this endpoint"
+
+  /geolocation:
+    get:
+      summary: Get geolocation for an IP address
+      description: |
+        Resolve an IP address to a country, region, and default fiat currency. Pass the end user's
+        `customer_ip_address` when your backend makes the request on their behalf; when omitted, the
+        IP address of the request itself is used.
+
+        Onramp provider and payment method availability depend on the user's location, so use this to
+        pick a default fiat currency before quoting and to confirm which location the
+        `customer_ip_address` you pass to `POST /payments/quotes` resolves to.
+      operationId: getGeolocation
+      tags:
+        - Geolocation
+      security: []
+      parameters:
+        - name: customer_ip_address
+          in: query
+          required: false
+          description: IPv4 or IPv6 address of the end user. Defaults to the IP address of the request.
+          schema:
+            type: string
+          example: "8.8.8.8"
+      responses:
+        "200":
+          description: Geolocation resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeolocationResponse"
+              example:
+                alpha3_country_code: USA
+                state_code: PA
+                default_currency: USD
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+              example:
+                errors:
+                  - code: invalid_union
+                    path: [customer_ip_address]
+                    message: "Invalid input"
+
+  /prices:
+    post:
+      summary: Get token prices
+      description: |
+        Get the current price of one or more tokens denominated in a fiat currency.
+
+        The response is a map keyed by the normalized token identifier (`chain:address`, lowercased)
+        with the price as a decimal string. The fiat currency itself is included as a key (for example
+        `usd`) with a value of `1.0`. The `usd` value is always included, even when the requested fiat
+        is something like `eur`. Tokens that do not have a price will be left out of the response.
+      operationId: getPrices
+      tags:
+        - Prices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PricesRequest"
+            example:
+              fiat: USD
+              tokens:
+                - "ethereum:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+                - "base:0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+      responses:
+        "200":
+          description: Prices retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PricesResponse"
+              example:
+                "ethereum:0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48": "0.9999"
+                "base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913": "0.9999"
+                usd: "1.0"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+              example:
+                errors:
+                  - code: custom
+                    path: [tokens, 0]
+                    message: "Unknown Chain: 'nope'"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - kind: other
+                    message: "Invalid API key"
 
   /payments:
     get:
@@ -471,7 +563,7 @@ paths:
       parameters:
         - name: owner_address
           in: query
-          required: false
+          required: true
           description: Owner address to filter payments by
           schema:
             type: string
@@ -515,6 +607,14 @@ paths:
           description: Filter payments by label
           schema:
             type: string
+        - name: tags[]
+          in: query
+          required: false
+          description: Filter payments returned to one or more client-defined tags. Returns only payments that have all of the listed client-defined tags. No empty string tags and the sum total of all tag characters cannot exceed 400.
+          schema:
+            type: array
+            items:
+              type: string
       responses:
         "200":
           description: Payment history retrieved successfully
@@ -658,6 +758,76 @@ paths:
                 errors:
                   - kind: other
                     message: "You do not have permission to access payment history for this address"
+
+  /payments/methods:
+    get:
+      summary: Get available payment methods
+      description: |
+        List the onramp payment methods available for a fiat input and an output asset, grouped by
+        onramp provider.
+
+        Availability depends on the end user's location, so pass the end user's `customer_ip_address`
+        when your backend makes the request on their behalf. Use the result to show users which
+        payment methods they can choose before requesting quotes, or to build the `onramp_methods`
+        filter for `POST /payments/quotes`.
+      operationId: getPaymentMethods
+      tags:
+        - Payments
+      parameters:
+        - name: input
+          in: query
+          required: true
+          description: Fiat currency the user will pay with
+          schema:
+            $ref: "#/components/schemas/Fiat"
+        - name: output
+          in: query
+          required: true
+          description: Asset the user will receive
+          schema:
+            $ref: "#/components/schemas/Asset"
+        - name: customer_ip_address
+          in: query
+          required: false
+          description: IPv4 or IPv6 address of the end user, used to determine location-based availability
+          schema:
+            type: string
+          example: "8.8.8.8"
+      responses:
+        "200":
+          description: Payment methods retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentMethodsResponse"
+              example:
+                providers:
+                  stripe: [CREDIT_CARD, DEBIT_CARD, GOOGLE_PAY]
+                  moonpay: [APPLE_PAY, CREDIT_CARD, DEBIT_CARD, GOOGLE_PAY, PAYPAL, VENMO]
+                  coinbase: [ACH, DEBIT_CARD, FIAT_BALANCE]
+                  banxa: [CREDIT_CARD, DEBIT_CARD, GOOGLE_PAY]
+                  rampnetwork: [APPLE_PAY, CREDIT_CARD, DEBIT_CARD, GOOGLE_PAY]
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+              example:
+                errors:
+                  - code: invalid_union
+                    path: [output]
+                    message: "Invalid input"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - kind: other
+                    message: "Invalid API key"
 
   /payments/quotes:
     post:
@@ -872,6 +1042,15 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/WithdrawPaymentAuthorizationRequest"
+            example:
+              withdraw_from:
+                withdraw_type: PAYMENT
+                payment_id: "41b16a6f-704e-44ba-9964-2b66df8a73e8"
+                withdraw_account: SPW
+              token_amounts:
+                - token: "ethereum:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+                  amount: "25.5"
+              recipient_address: "0xabc1234567890abcdef1234567890abcdef1234"
       responses:
         "200":
           description: Withdrawal initiated successfully
@@ -972,12 +1151,90 @@ paths:
                   - kind: other
                     message: "You are not authorized to withdraw funds from this payment"
 
+  /payments/withdraw/status:
+    get:
+      summary: Get withdrawal status
+      description: |
+        Poll the status of a withdrawal using the `withdraw_id` returned by `POST /payments/withdraw`
+        and `POST /payments/withdraw/confirm`. Clients can start tracking a withdrawal as soon as
+        `POST /payments/withdraw` returns, before the user signs.
+
+        The confirm endpoint waits up to `polling_timeout` for the withdrawal to land and returns
+        `PENDING` if it has not completed in time. Keep polling this endpoint until the status is
+        `SUCCESS`, `FAILED`, or `EXPIRED`. `transaction_hash` is null while the withdrawal is pending.
+      operationId: getWithdrawStatus
+      tags:
+        - Payments
+      parameters:
+        - name: withdraw_id
+          in: query
+          required: true
+          description: Withdrawal identifier returned by `POST /payments/withdraw` and `POST /payments/withdraw/confirm`
+          schema:
+            type: string
+            format: uuid
+          example: "9d1f6c2e-3b7a-4c8d-9e0f-1a2b3c4d5e6f"
+      responses:
+        "200":
+          description: Withdrawal status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WithdrawStatusResponse"
+              example:
+                withdraw_id: "9d1f6c2e-3b7a-4c8d-9e0f-1a2b3c4d5e6f"
+                payment_id: "41b16a6f-704e-44ba-9964-2b66df8a73e8"
+                status: SUCCESS
+                transaction_hash: "0x7d3c1f2a9b8e4d6c5a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+              example:
+                errors:
+                  - code: invalid_format
+                    path: [withdraw_id]
+                    message: "Invalid UUID"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - kind: other
+                    message: "Invalid API key"
+        "404":
+          description: Withdrawal not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - kind: other
+                    message: "Withdrawal 9d1f6c2e-3b7a-4c8d-9e0f-1a2b3c4d5e6f not found"
+
   /payments/balances:
     post:
       summary: Get wallet balances
       description: |
-        Retrieve balances for the wallets associated with a payment. You can optionally supply additional
-        wallet and token pairs to check alongside the payment's primary wallet.
+        Retrieve token balances held at Halliday deposit addresses.
+
+        Use an `OWNER` query with a `PAYMENT` scope to check the deposit addresses of one payment. The API
+        derives the payment's deposit address on each requested token's chain, including chains that are
+        not in the payment's `processing_addresses`, and returns a `withdraw_from` object for each balance
+        that can be passed to `POST /payments/withdraw`. When `tokens` is omitted, only the tokens and
+        chains on the payment's own route are checked, so pass the specific token to look for. Funds sent
+        into a cross-chain bridge deposit that did not complete are listed in `future_withdrawable_balances`
+        and become withdrawable after their `deadline`.
+
+        Use an `OWNER` query with an `EXTRA` scope to find balances at the owner's reusable deposit wallets
+        that are not attributed to a payment, or an `EXTERNAL` query to read the balance of arbitrary
+        address and token pairs.
       operationId: getPaymentBalances
       tags:
         - Payments
@@ -988,12 +1245,14 @@ paths:
             schema:
               $ref: "#/components/schemas/RequestForPaymentBalances"
             example:
-              payment_id: "41b16a6f-704e-44ba-9964-2b66df8a73e8"
-              custom_queries:
-                - address: "0xabc1234567890abcdef1234567890abcdef1234"
-                  token: "ethereum:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
-                - address: "0xdef1234567890abcdef1234567890abcdef5678"
-                  token: "arbitrum:0xfffFFFFFfFFfffFFfFffffFffFFfFFfFFfFFf"
+              query:
+                source: OWNER
+                owner: "0xabc1234567890abcdef1234567890abcdef1234"
+                scope:
+                  kind: PAYMENT
+                  payment_id: "41b16a6f-704e-44ba-9964-2b66df8a73e8"
+                tokens:
+                  - "ethereum:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
       responses:
         "200":
           description: Wallet balances retrieved successfully
@@ -1001,6 +1260,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PaymentBalancesResponse"
+              example:
+                balance_results:
+                  - address: "0x4f2e8c1a9b7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f"
+                    token: "ethereum:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+                    value:
+                      kind: amount
+                      amount: "25.5"
+                      withdrawal_fee: null
+                      min_withdrawal_amount: null
+                    withdraw_from:
+                      withdraw_type: PAYMENT
+                      payment_id: "41b16a6f-704e-44ba-9964-2b66df8a73e8"
+                      withdraw_account: SPW
+                    payment_gist: null
+                future_withdrawable_balances: []
         "400":
           description: Bad request
           content:
@@ -1041,6 +1315,75 @@ paths:
                 errors:
                   - kind: other
                     message: "Payment 'pay_abc123' not found"
+
+  /payments/issues:
+    post:
+      summary: Get issues for an owner address
+      description: |
+        Check an owner address for funds parked at a deposit address before quoting a new payment. The API
+        scans the owner's payments under your organization, any addresses linked to that owner, and the
+        owner's reusable deposit wallets. Returns an empty `issues` array when there is nothing to address.
+
+        Today this endpoint only returns `parked_fund` issues. Owner verification and geolocation problems
+        are reported as issues on quotes and on the payment status instead.
+
+        A `parked_fund` issue includes the token and balance involved, a `classification` describing
+        why the funds are parked, and a `withdraw_from` object identifying the payment and account
+        holding them, which you can use with `POST /payments/withdraw` to recover the funds.
+      operationId: getPaymentIssues
+      tags:
+        - Payments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentIssuesRequest"
+            example:
+              owner_address: "0xabc1234567890abcdef1234567890abcdef1234"
+      responses:
+        "200":
+          description: Issues retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentIssuesResponse"
+              example:
+                issues:
+                  - kind: parked_fund
+                    token: "ethereum:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+                    balance:
+                      "#": "25500000"
+                    classification: STUCK
+                    severity: HIGH
+                    payment_gist:
+                      null
+                    withdraw_from:
+                      withdraw_type: PAYMENT
+                      payment_id: "41b16a6f-704e-44ba-9964-2b66df8a73e8"
+                      withdraw_account: INTENT
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+              example:
+                errors:
+                  - code: invalid_type
+                    expected: string
+                    path: [owner_address]
+                    message: "Invalid input: expected string, received undefined"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - kind: other
+                    message: "Invalid API key"
 
   /orgs/webhooks:
     post:
@@ -1382,6 +1725,7 @@ webhooks:
               event:
                 workflow_id: e050f684-7b3d-407a-98e7-5dfe11860317
                 status: COMPLETE
+                tags: ["string1", "string2"]
       responses:
         "200":
           description: |
@@ -1608,8 +1952,8 @@ components:
           type: array
           items:
             type: string
-            enum: [CREDIT_CARD, DEBIT_CARD, ACH, FIAT_BALANCE, TOKEN_BALANCE, APPLE_PAY, PAYPAL, VENMO, REVOLUT, GOOGLE_PAY, SEPA, FASTER_PAYMENTS, PIX, UPI, WIRE]
-          description: Filter by onramp payment methods
+            enum: [CREDIT_CARD, DEBIT_CARD, ACH, FIAT_BALANCE, TOKEN_BALANCE, APPLE_PAY, PAYPAL, VENMO, REVOLUT, GOOGLE_PAY, SEPA, FASTER_PAYMENTS, PIX, SPEI, UPI, WIRE, SWIFT]
+          description: Filter by onramp payment methods. Get in touch with the Halliday team to have SWIFT enabled on your API key.
           example: ["CREDIT_CARD", "ACH", "APPLE_PAY"]
         customer_ip_address:
           type: string
@@ -1624,12 +1968,13 @@ components:
           type: string
           maxLength: 255
           description: Optional label for the payment.
-        features:
+        tags:
           type: array
           items:
             type: string
-            enum: [BETA_EDGES, ORG_BETA_EDGES, ORG_EDGES]
-          description: Feature flags to enable for this quote.
+            minLength: 1
+          description: Optional client-defined strings attached to the payment. Returned as `tags` on the payment status and as `event.tags` in webhook deliveries. Every tag must be a non-empty string, and the combined length of all tags must not exceed 400 characters.
+          example: ["string1", "string2"]
         rev_share_name:
           type: string
           description: Revenue share configuration name.
@@ -1785,7 +2130,7 @@ components:
           description: Onramp provider name
         onramp_method:
           type: string
-          enum: [CREDIT_CARD, DEBIT_CARD, ACH, FIAT_BALANCE, TOKEN_BALANCE, APPLE_PAY, PAYPAL, VENMO, REVOLUT, GOOGLE_PAY, SEPA, FASTER_PAYMENTS, PIX, UPI, WIRE]
+          enum: [CREDIT_CARD, DEBIT_CARD, ACH, FIAT_BALANCE, TOKEN_BALANCE, APPLE_PAY, PAYPAL, VENMO, REVOLUT, GOOGLE_PAY, SEPA, FASTER_PAYMENTS, PIX, SPEI, UPI, WIRE, SWIFT]
           description: Payment method
           example: CREDIT_CARD
         route:
@@ -1843,7 +2188,7 @@ components:
           description: Onramp provider name
         onramp_method:
           type: string
-          enum: [CREDIT_CARD, DEBIT_CARD, ACH, FIAT_BALANCE, TOKEN_BALANCE, APPLE_PAY, PAYPAL, VENMO, REVOLUT, GOOGLE_PAY, SEPA, FASTER_PAYMENTS, PIX, UPI, WIRE]
+          enum: [CREDIT_CARD, DEBIT_CARD, ACH, FIAT_BALANCE, TOKEN_BALANCE, APPLE_PAY, PAYPAL, VENMO, REVOLUT, GOOGLE_PAY, SEPA, FASTER_PAYMENTS, PIX, SPEI, UPI, WIRE, SWIFT]
           description: Payment method
           example: CREDIT_CARD
         route:
@@ -1881,227 +2226,95 @@ components:
           example: "USD"
 
     # Confirm Payment Response
-    ConfirmPaymentResponse:
-      type: object
-      required:
-        - quote_request
-        - quote
-      properties:
-        quote:
-          $ref: "#/components/schemas/Quote"
-        current_prices:
-          type: object
-          additionalProperties:
-            type: string
-          description: Mapping of asset symbols to their unit prices
-          example:
-            "USD": "1.00"
-            "ethereum:0x": "4200"
-            "ethereum:0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48": "1.00"
-        price_currency:
-          type: string
-          description: Currency that all prices are denominated in
-          example: USD
-
-    Instruction:
-      oneOf:
-        - $ref: "#/components/schemas/OnrampWidgetInstruction"
-        - $ref: "#/components/schemas/SwapInstruction"
-        - $ref: "#/components/schemas/ErrorWithdrawOrRolloverInstruction"
-      discriminator:
-        propertyName: instruction_type
-
-    OnrampWidgetInstruction:
-      type: object
-      required:
-        - instruction_type
-        - payment_id
-        - onramp_url
-        - deposit_info
-        - onramp_currency
-      properties:
-        instruction_type:
-          type: string
-          enum: [ONRAMP_WIDGET]
-        onramp_url:
-          type: string
-          description: URL to query to get onramp details and redirect to onramp
-          example: "https://app.halliday.xyz/funding?payment_id=pay123&..."
-        payment_id:
-          type: string
-          description: ID of the payment to onramp
-        deposit_info:
-          type: object
-          required:
-            - deposit_token
-            - deposit_amount
-            - deposit_address
-            - deposit_chain
-          properties:
-            deposit_token:
-              $ref: "#/components/schemas/Token"
-              description: Token required for deposit
-            deposit_amount:
-              type: string
-              description: Amount of the token required for deposit
-              example: "100.50"
-            deposit_address:
-              type: string
-              description: Contract address for payment
-            deposit_chain:
-              type: string
-              description: Blockchain for payment contract
-              example: ethereum
-        onramp_currency:
-          $ref: "#/components/schemas/Fiat"
-
-    SwapInstruction:
-      type: object
-      required:
-        - instruction_type
-        - deposit_info
-      properties:
-        instruction_type:
-          type: string
-          enum: [SWAP]
-        deposit_info:
-          type: object
-          required:
-            - deposit_token
-            - deposit_amount
-            - deposit_address
-            - deposit_chain
-          properties:
-            deposit_token:
-              $ref: "#/components/schemas/Token"
-              description: Token required for deposit
-            deposit_amount:
-              type: string
-              description: Amount of the token required for deposit
-              example: "100.50"
-            deposit_address:
-              type: string
-              description: Contract address for payment
-            deposit_chain:
-              type: string
-              description: Blockchain for payment contract
-              example: ethereum
-
-    ErrorWithdrawOrRolloverInstruction:
-      type: object
-      required:
-        - instruction_type
-        - error_message
-        - asset_amounts
-      properties:
-        instruction_type:
-          type: string
-          enum: [ERROR_WITHDRAW_OR_ROLLOVER]
-          description: Instruction type for error handling with withdrawal or rollover option
-        error_message:
-          type: string
-          description: Brief explanation of the error.
-        asset_amounts:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssetAmount"
-        parent_payment_id:
-          type: string
-          description: ID of the parent payment where the funds are being rolled over from.
-
-      description: |
-        When an error occurs during payment processing, this instruction provides:
-        1. Information about the error
-        2. The assets and amounts to withdraw or rollover
-        3. For rollovers, the parent payment ID of the payment that encountered the error
-        4. To retry the payment, call /payments/quotes with the payment_id to get new quote options.
-
-    BalanceQuery:
-      type: object
-      required:
-        - address
-        - token
-      properties:
-        address:
-          type: string
-          description: One-time wallet address associated with the payment.
-          example: "0xabc1234567890abcdef1234567890abcdef1234"
-        token:
-          $ref: "#/components/schemas/Token"
-          description: Token identifier to query in the wallet.
-          example: "ethereum:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
-
-    RequestForBalances:
-      type: object
-      properties:
-        workflow_id:
-          type: string
-          description: Payment identifier whose one-time wallet balances should be returned.
-          example: pay_abc123
-        custom_queries:
-          type: array
-          description: Additional wallet and token combinations to query.
-          items:
-            $ref: "#/components/schemas/BalanceQuery"
-
-    BalanceResult:
-      type: object
-      required:
-        - address
-        - token
-        - value
-      properties:
-        address:
-          type: string
-          description: One-time wallet address that was queried.
-          example: "0xabc1234567890abcdef1234567890abcdef1234"
-        token:
-          $ref: "#/components/schemas/Token"
-          description: Token identifier that was queried.
-          example: "ethereum:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
-        value:
-          oneOf:
-            - type: object
-              required:
-                - kind
-                - amount
-              properties:
-                kind:
-                  type: string
-                  enum: [amount]
-                amount:
-                  $ref: "#/components/schemas/Amount"
-            - type: object
-              required:
-                - kind
-              properties:
-                kind:
-                  type: string
-                  enum: [error]
-          discriminator:
-            propertyName: kind
-
-    BalancesResponse:
-      type: object
-      required:
-        - balance_results
-      properties:
-        balance_results:
-          type: array
-          items:
-            $ref: "#/components/schemas/BalanceResult"
-
     RequestForPaymentBalances:
       type: object
+      required:
+        - query
       properties:
+        query:
+          oneOf:
+            - $ref: "#/components/schemas/OwnerBalanceQuery"
+            - $ref: "#/components/schemas/ExternalBalanceQuery"
+          discriminator:
+            propertyName: source
+            mapping:
+              OWNER: "#/components/schemas/OwnerBalanceQuery"
+              EXTERNAL: "#/components/schemas/ExternalBalanceQuery"
+
+    OwnerBalanceQuery:
+      type: object
+      required:
+        - source
+        - owner
+        - scope
+      properties:
+        source:
+          type: string
+          enum: [OWNER]
+        owner:
+          type: string
+          description: Owner wallet address of the payment or reusable deposit wallets to query.
+          example: "0xabc1234567890abcdef1234567890abcdef1234"
+        scope:
+          oneOf:
+            - $ref: "#/components/schemas/PaymentBalanceScope"
+            - $ref: "#/components/schemas/ExtraBalanceScope"
+          discriminator:
+            propertyName: kind
+            mapping:
+              PAYMENT: "#/components/schemas/PaymentBalanceScope"
+              EXTRA: "#/components/schemas/ExtraBalanceScope"
+        tokens:
+          type: array
+          description: |
+            Tokens to check. When omitted, the tokens checked depend on the scope. For a `PAYMENT`
+            scope, only the tokens and chains on the payment's own route are checked. For an `EXTRA`
+            scope, each reusable deposit wallet is checked for the tokens Halliday already tracks for
+            it and any tokens with known parked funds, and zero balances are omitted. A token sent to
+            a deposit address outside those sets is not found unless it is listed here, so pass the
+            specific token to look for.
+          items:
+            $ref: "#/components/schemas/Token"
+          example: ["ethereum:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"]
+
+    PaymentBalanceScope:
+      type: object
+      description: Query the deposit addresses of one payment.
+      required:
+        - kind
+        - payment_id
+      properties:
+        kind:
+          type: string
+          enum: [PAYMENT]
         payment_id:
           type: string
           format: uuid
-          description: Payment identifier whose associated wallets should be queried.
+          description: Payment whose deposit addresses should be queried. Must belong to `owner`.
           example: "41b16a6f-704e-44ba-9964-2b66df8a73e8"
-        custom_queries:
+
+    ExtraBalanceScope:
+      type: object
+      description: Query balances at the owner's reusable deposit wallets that are not attributed to a payment.
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+          enum: [EXTRA]
+
+    ExternalBalanceQuery:
+      type: object
+      required:
+        - source
+        - targets
+      properties:
+        source:
+          type: string
+          enum: [EXTERNAL]
+        targets:
           type: array
-          description: Additional wallet and token combinations to query.
+          description: Address and token pairs to read balances for.
           items:
             type: object
             required:
@@ -2117,7 +2330,130 @@ components:
                 description: Token identifier to query at the wallet address.
                 example: "ethereum:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
 
-    PaymentBalancesResult:
+    BalanceValueError:
+      type: object
+      description: The balance could not be read.
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+          enum: [error]
+
+    OwnerBalanceAmount:
+      type: object
+      required:
+        - kind
+        - amount
+        - withdrawal_fee
+        - min_withdrawal_amount
+      properties:
+        kind:
+          type: string
+          enum: [amount]
+        amount:
+          type: string
+          description: Balance amount as a decimal string.
+          example: "25.5"
+        withdrawal_fee:
+          type: [string, "null"]
+          description: Withdrawal fee amount as a decimal string, or null if not applicable.
+        min_withdrawal_amount:
+          type: [string, "null"]
+          description: Minimum amount that can be withdrawn as a decimal string, or null if not applicable.
+
+    ExternalBalanceAmount:
+      type: object
+      required:
+        - kind
+        - amount
+      properties:
+        kind:
+          type: string
+          enum: [amount]
+        amount:
+          type: string
+          description: Balance amount as a decimal string.
+          example: "25.5"
+
+    OwnerBalanceValue:
+      oneOf:
+        - $ref: "#/components/schemas/OwnerBalanceAmount"
+        - $ref: "#/components/schemas/BalanceValueError"
+      discriminator:
+        propertyName: kind
+        mapping:
+          amount: "#/components/schemas/OwnerBalanceAmount"
+          error: "#/components/schemas/BalanceValueError"
+
+    OwnerBalanceResult:
+      type: object
+      required:
+        - address
+        - token
+        - value
+        - withdraw_from
+        - payment_gist
+      properties:
+        address:
+          type: string
+          description: Deposit address that was queried.
+          example: "0x4f2e8c1a9b7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f"
+        token:
+          $ref: "#/components/schemas/Token"
+          description: Token identifier that was queried.
+          example: "ethereum:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+        value:
+          $ref: "#/components/schemas/OwnerBalanceValue"
+        withdraw_from:
+          $ref: "#/components/schemas/WithdrawFrom"
+          description: Where the balance can be withdrawn from, to pass to `POST /payments/withdraw`. Null if it cannot be withdrawn through the API.
+        payment_gist:
+          $ref: "#/components/schemas/PaymentGist"
+          description: Summary of the payment the funds were intended for. Only set when the payment uses a reusable deposit wallet, otherwise null.
+
+    FutureWithdrawableBalance:
+      allOf:
+        - $ref: "#/components/schemas/OwnerBalanceResult"
+        - type: object
+          required:
+            - deadline
+          properties:
+            deadline:
+              type: string
+              format: date-time
+              description: Time after which the balance becomes withdrawable.
+              example: "2026-10-08T12:00:00Z"
+      description: Funds sent into a cross-chain bridge deposit that did not complete. They become withdrawable after `deadline`.
+
+    OwnerBalancesResponse:
+      type: object
+      description: Response to an `OWNER` query.
+      required:
+        - balance_results
+        - future_withdrawable_balances
+      properties:
+        balance_results:
+          type: array
+          items:
+            $ref: "#/components/schemas/OwnerBalanceResult"
+        future_withdrawable_balances:
+          type: array
+          description: Balances that are not yet withdrawable. Always present and may be empty.
+          items:
+            $ref: "#/components/schemas/FutureWithdrawableBalance"
+
+    ExternalBalanceValue:
+      oneOf:
+        - $ref: "#/components/schemas/ExternalBalanceAmount"
+        - $ref: "#/components/schemas/BalanceValueError"
+      discriminator:
+        propertyName: kind
+        mapping:
+          amount: "#/components/schemas/ExternalBalanceAmount"
+          error: "#/components/schemas/BalanceValueError"
+
+    ExternalBalanceResult:
       type: object
       required:
         - address
@@ -2132,65 +2468,49 @@ components:
           $ref: "#/components/schemas/Token"
           description: Token identifier that was queried.
           example: "ethereum:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
-        withdraw_account:
-          type: string
-          enum: [INTENT, SPW]
-          default: SPW
-          description: Account the balance would be withdrawn from.
         value:
-          oneOf:
-            - type: object
-              required:
-                - kind
-                - amount
-                - withdrawal_fee
-                - min_withdrawal_amount
-              properties:
-                kind:
-                  type: string
-                  enum: [amount]
-                amount:
-                  type: string
-                  description: Balance amount as a decimal string.
-                withdrawal_fee:
-                  type: string
-                  nullable: true
-                  description: Withdrawal fee amount, or null if not applicable.
-                min_withdrawal_amount:
-                  type: string
-                  nullable: true
-                  description: Minimum amount that can be withdrawn, or null if not applicable.
-            - type: object
-              required:
-                - kind
-              properties:
-                kind:
-                  type: string
-                  enum: [error]
-          discriminator:
-            propertyName: kind
+          $ref: "#/components/schemas/ExternalBalanceValue"
 
-    PaymentBalancesResponse:
+    ExternalBalancesResponse:
       type: object
+      description: Response to an `EXTERNAL` query.
       required:
         - balance_results
       properties:
         balance_results:
           type: array
           items:
-            $ref: "#/components/schemas/PaymentBalancesResult"
+            $ref: "#/components/schemas/ExternalBalanceResult"
+
+    PaymentBalancesResponse:
+      oneOf:
+        - $ref: "#/components/schemas/OwnerBalancesResponse"
+        - $ref: "#/components/schemas/ExternalBalancesResponse"
+      description: Shape depends on the request's `query.source`. `OWNER` queries return `OwnerBalancesResponse`, `EXTERNAL` queries return `ExternalBalancesResponse`.
 
     # Withdrawal
     WithdrawPaymentAuthorizationRequest:
       type: object
+      description: |
+        Identify the funds to withdraw with `withdraw_from`, passed through exactly as returned by
+        `POST /payments/issues` or `POST /payments/balances`. Either a non-null `withdraw_from` or the
+        deprecated `payment_id` must be provided.
       required:
-        - payment_id
         - token_amounts
         - recipient_address
+      anyOf:
+        - required:
+            - withdraw_from
+          properties:
+            withdraw_from:
+              not:
+                type: "null"
+        - required:
+            - payment_id
       properties:
-        payment_id:
-          type: string
-          description: ID of the payment to withdraw
+        withdraw_from:
+          $ref: "#/components/schemas/WithdrawFrom"
+          description: Where to withdraw from, passed through exactly as returned in `withdraw_from` by `POST /payments/issues` or `POST /payments/balances`.
         token_amounts:
           type: array
           items:
@@ -2198,17 +2518,22 @@ components:
           description: List of token amounts to withdraw back to the owner or to a requoted processing address
         recipient_address:
           type: string
-          description: On-chain address to withdraw the funds to. The assets will go to the address on the same chain the assets are on.
+          description: Onchain address to withdraw the funds to. The assets will go to the address on the same chain the assets are on.
+        payment_id:
+          type: string
+          deprecated: true
+          description: ID of the payment to withdraw.
         withdraw_account:
           type: string
-          enum: [INTENT, SPW]
+          enum: [INTENT, SPW, RDW]
+          deprecated: true
           description: Type of account to withdraw from.
 
     WithdrawPaymentAuthorizationResponse:
       type: object
       required:
         - signature_type
-        - payment_id
+        - withdraw_id
         - withdraw_authorization
         - state_token
       properties:
@@ -2216,9 +2541,13 @@ components:
           type: string
           enum: [EIP712, EIP191]
           description: Signature type required for the withdrawal authorization.
+        withdraw_id:
+          type: string
+          format: uuid
+          description: ID of the withdrawal. Use it with `GET /payments/withdraw/status` to poll for completion.
         payment_id:
           type: string
-          description: ID of the withdrawal transaction
+          description: ID of the payment the withdrawal belongs to.
         withdraw_authorization:
           type: string
           description: |
@@ -2249,16 +2578,20 @@ components:
     WithdrawPaymentResponse:
       type: object
       required:
-        - payment_id
+        - withdraw_id
         - status
         - transaction_hash
       properties:
         payment_id:
           type: string
           description: ID of the payment to withdraw
+        withdraw_id:
+          type: string
+          format: uuid
+          description: ID of the withdrawal. Use it with GET /payments/withdraw/status to poll for completion.
         status:
           type: string
-          enum: [SUCCESS, PENDING]
+          enum: [SUCCESS, PENDING, FAILED, EXPIRED]
           description: Status of the withdrawal
         transaction_hash:
           anyOf:
@@ -2266,6 +2599,30 @@ components:
             - type: "null"
           description: Blockchain transaction hash for the withdrawal, or null while the withdrawal is pending
 
+
+    WithdrawStatusResponse:
+      type: object
+      required:
+        - withdraw_id
+        - status
+        - transaction_hash
+      properties:
+        withdraw_id:
+          type: string
+          format: uuid
+          description: ID of the withdrawal
+        payment_id:
+          type: string
+          description: ID of the payment the withdrawal belongs to
+        status:
+          type: string
+          enum: [PENDING, SUCCESS, FAILED, EXPIRED]
+          description: Status of the withdrawal
+        transaction_hash:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Blockchain transaction hash for the withdrawal, or null while the withdrawal is pending
 
     # Payment Status
     PaymentStatus:
@@ -2311,7 +2668,7 @@ components:
         initiate_fund_by:
           type: string
           format: date-time
-          description: Deadline for funding the payment.
+          description: Deadline to start the provider checkout for an onramp payment. Swap deposits are acceptable before the payment becomes `EXPIRED` approximately 8 to 10 hours after quote creation but are less likely to complete properly if they are funded after the `accept_by` timestamp.
         completed_at:
           type: string
           format: date-time
@@ -2341,6 +2698,12 @@ components:
           type: string
           description: Optional payment label
           maxLength: 255
+        tags:
+          type: array
+          items:
+            type: string
+          description: Client-defined tags set when the quote was created.
+          example: ["string1", "string2"]
         processing_addresses:
           type: array
           items:
@@ -2439,15 +2802,6 @@ components:
           type: object
           nullable: true
           description: Declaration object
-
-    PaymentStatusRequest:
-      type: object
-      required:
-        - payment_id
-      properties:
-        payment_id:
-          type: string
-          description: Unique payment identifier to fetch status for.
 
     NextInstruction:
       description: Instruction payload that returns the funding pages if the payment requires funding.
@@ -2558,7 +2912,6 @@ components:
     Issue:
       oneOf:
         - $ref: "#/components/schemas/AmountIssue"
-        - $ref: "#/components/schemas/AmountDownstreamIssue"
         - $ref: "#/components/schemas/FundingIssue"
         - $ref: "#/components/schemas/OwnerIssue"
         - $ref: "#/components/schemas/GeolocationIssue"
@@ -2567,8 +2920,26 @@ components:
         - $ref: "#/components/schemas/OtherIssue"
         - $ref: "#/components/schemas/UnknownIssue"
         - $ref: "#/components/schemas/OrgConfigurationIssue"
+        - $ref: "#/components/schemas/ParkedFundIssue"
+        - $ref: "#/components/schemas/DestinationIssue"
+        - $ref: "#/components/schemas/PayoutMethodIssue"
+        - $ref: "#/components/schemas/KycIssue"
       discriminator:
         propertyName: kind
+        mapping:
+          amount: "#/components/schemas/AmountIssue"
+          funding: "#/components/schemas/FundingIssue"
+          owner: "#/components/schemas/OwnerIssue"
+          geolocation: "#/components/schemas/GeolocationIssue"
+          provider: "#/components/schemas/ProviderIssue"
+          payin_method: "#/components/schemas/PayinMethodIssue"
+          other: "#/components/schemas/OtherIssue"
+          unknown: "#/components/schemas/UnknownIssue"
+          org_configuration: "#/components/schemas/OrgConfigurationIssue"
+          parked_fund: "#/components/schemas/ParkedFundIssue"
+          destination: "#/components/schemas/DestinationIssue"
+          payout_method: "#/components/schemas/PayoutMethodIssue"
+          kyc: "#/components/schemas/KycIssue"
 
     AmountIssue:
       type: object
@@ -2584,36 +2955,6 @@ components:
         kind:
           type: string
           enum: [amount]
-        asset:
-          $ref: "#/components/schemas/Asset"
-        given:
-          $ref: "#/components/schemas/Amount"
-        limits:
-          $ref: "#/components/schemas/Limits"
-        downstream_limits:
-          $ref: "#/components/schemas/Limits"
-        source:
-          type: string
-        message:
-          type: string
-        reason:
-          type: string
-          enum: [TOO_LOW, TOO_HIGH, UNEXPECTEDLY_LOW, UNEXPECTEDLY_HIGH, NO_VALID_AMOUNT, UNKNOWN]
-
-    AmountDownstreamIssue:
-      type: object
-      required:
-        - kind
-        - asset
-        - given
-        - limits
-        - source
-        - message
-        - reason
-      properties:
-        kind:
-          type: string
-          enum: [amount-downstream]
         asset:
           $ref: "#/components/schemas/Asset"
         given:
@@ -2746,6 +3087,137 @@ components:
         message:
           type: string
 
+    ParkedFundIssue:
+      type: object
+      description: Funds are held at a deposit address associated with the owner and are not being processed.
+      required:
+        - kind
+        - token
+        - balance
+        - classification
+        - severity
+        - payment_gist
+        - withdraw_from
+      properties:
+        kind:
+          type: string
+          enum: [parked_fund]
+        token:
+          $ref: "#/components/schemas/Token"
+        balance:
+          type: object
+          required:
+            - "#"
+          properties:
+            "#":
+              type: string
+              description: Integer amount in the token's smallest unit, serialized as a string.
+              example: "25500000"
+          description: |
+            Token balance parked at the address, as an integer in the token's smallest unit. The `{"#": "..."}`
+            wrapper is how the API serializes integers too large for a JSON number. Divide by the token's
+            `decimals` from `GET /assets` to display it, for example `{"#": "25500000"}` is 25.5 USDC.
+            Note that `POST /payments/balances` reports the same funds as a plain decimal string (`"25.5"`).
+        classification:
+          type: string
+          enum: [MISSENT, STUCK, UNDERFUNDED, STALLED, EXTRA, SLIPPED, DELAYED]
+          description: Why the funds are parked.
+        severity:
+          type: string
+          enum: [HIGH, LOW]
+        payment_gist:
+          $ref: "#/components/schemas/PaymentGist"
+          description: Summary of the payment the funds were intended for, or null.
+        withdraw_from:
+          $ref: "#/components/schemas/WithdrawFrom"
+          description: Where the parked funds can be withdrawn from, or null if they cannot be withdrawn through the API.
+
+    PaymentGist:
+      anyOf:
+        - type: object
+          required:
+            - op
+            - destination_address
+            - destination_token
+          properties:
+            op:
+              type: string
+              enum: [buy]
+            destination_address:
+              type: string
+            destination_token:
+              $ref: "#/components/schemas/Token"
+        - type: "null"
+      description: Summary of a payment, or null.
+
+    WithdrawFrom:
+      anyOf:
+        - type: object
+          required:
+            - withdraw_type
+            - payment_id
+            - withdraw_account
+          properties:
+            withdraw_type:
+              type: string
+              enum: [PAYMENT]
+            payment_id:
+              type: string
+              format: uuid
+            withdraw_account:
+              type: string
+              enum: [INTENT, SPW, RDW]
+        - type: object
+          required:
+            - withdraw_type
+            - rdw_address
+          properties:
+            withdraw_type:
+              type: string
+              enum: [EXTRA_RDW_BALANCE]
+            rdw_address:
+              type: string
+        - type: "null"
+      description: Where funds can be withdrawn from, or null if they cannot be withdrawn through the API.
+
+    DestinationIssue:
+      type: object
+      required:
+        - kind
+        - message
+      properties:
+        kind:
+          type: string
+          enum: [destination]
+        message:
+          type: string
+
+    PayoutMethodIssue:
+      type: object
+      required:
+        - kind
+        - message
+      properties:
+        kind:
+          type: string
+          enum: [payout_method]
+        message:
+          type: string
+
+    KycIssue:
+      type: object
+      required:
+        - kind
+        - message
+      properties:
+        kind:
+          type: string
+          enum: [kyc]
+        message:
+          type: string
+        provider_id:
+          type: string
+
     Amount:
       type: string
       description: A decimal amount string.
@@ -2770,6 +3242,93 @@ components:
           items:
             $ref: "#/components/schemas/Issue"
       description: Error response for known errors
+
+    # Payment Methods, Issues, Geolocation & Prices
+    PaymentMethodsResponse:
+      type: object
+      required:
+        - providers
+      properties:
+        providers:
+          type: object
+          description: Onramp provider name mapped to the payment methods it offers for this route and location. Get in touch with the Halliday team to have SWIFT enabled on your API key.
+          additionalProperties:
+            type: array
+            items:
+              type: string
+              enum: [CREDIT_CARD, DEBIT_CARD, ACH, FIAT_BALANCE, TOKEN_BALANCE, APPLE_PAY, PAYPAL, VENMO, REVOLUT, GOOGLE_PAY, SEPA, FASTER_PAYMENTS, PIX, SPEI, UPI, WIRE, SWIFT]
+        in_house:
+          type: object
+          description: Same shape as `providers`, for rails operated directly by Halliday. Present only when applicable. Get in touch with the Halliday team to have SWIFT enabled on your API key.
+          additionalProperties:
+            type: array
+            items:
+              type: string
+              enum: [CREDIT_CARD, DEBIT_CARD, ACH, FIAT_BALANCE, TOKEN_BALANCE, APPLE_PAY, PAYPAL, VENMO, REVOLUT, GOOGLE_PAY, SEPA, FASTER_PAYMENTS, PIX, SPEI, UPI, WIRE, SWIFT]
+
+    PaymentIssuesRequest:
+      type: object
+      required:
+        - owner_address
+      properties:
+        owner_address:
+          type: string
+          description: Wallet address of the payment owner to check
+
+    PaymentIssuesResponse:
+      type: object
+      required:
+        - issues
+      properties:
+        issues:
+          type: array
+          description: Issues found for the owner address. Empty when there is nothing to address.
+          items:
+            $ref: "#/components/schemas/Issue"
+
+    GeolocationResponse:
+      anyOf:
+        - type: object
+          required:
+            - alpha3_country_code
+            - state_code
+          properties:
+            alpha3_country_code:
+              type: string
+              description: ISO 3166-1 alpha-3 country code
+              example: USA
+            state_code:
+              type: string
+              description: Two-letter region code, or an empty string when not available
+              example: PA
+            default_currency:
+              type: string
+              description: Default fiat currency code for the location
+              example: USD
+        - type: "null"
+      description: Resolved location, or null if the IP address could not be resolved
+
+    PricesRequest:
+      type: object
+      required:
+        - fiat
+        - tokens
+      properties:
+        fiat:
+          $ref: "#/components/schemas/Fiat"
+        tokens:
+          type: array
+          description: Tokens to price
+          items:
+            $ref: "#/components/schemas/Token"
+
+    PricesResponse:
+      type: object
+      description: Normalized token identifier (`chain:address`, lowercased) mapped to its price in the requested fiat currency. The fiat currency is included as a key with a value of `1.0`.
+      additionalProperties:
+        type: string
+        description: Price as a decimal string
+        example: "0.9999"
 
     # Workflow Details
     QuotedRouteItem:
@@ -2826,21 +3385,6 @@ components:
           type: string
           enum: [user_fund, onramp, poll, bridge, rev_share, transfer_out, convert, custom_call]
 
-    Effect:
-      type: object
-      required:
-        - consume
-        - produce
-      properties:
-        consume:
-          type: array
-          items:
-            $ref: "#/components/schemas/Change"
-        produce:
-          type: array
-          items:
-            $ref: "#/components/schemas/Change"
-
     ChangeAmount:
       type: object
       required:
@@ -2873,21 +3417,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ChangeAmount"
-
-    Change:
-      type: object
-      required:
-        - account
-        - resource
-        - amount
-      properties:
-        account:
-          type: string
-          enum: [USER, DEST, HALLIDAY, SPW, REV_SHARE, BRIDGE]
-        resource:
-          $ref: "#/components/schemas/Resource"
-        amount:
-          type: string
 
     Resource:
       type: object
@@ -3174,12 +3703,22 @@ components:
                 - COMPLETE
                 - FAILED
               example: COMPLETE
+            tags:
+              type: array
+              items:
+                type: string
+              description: Client-defined tags set when the payment's quote was created.
+              example: ["string1", "string2"]
 
 tags:
   - name: Chains
     description: Blockchain network information and configuration
   - name: Assets
     description: Asset information, discovery, and supported asset pairs
+  - name: Geolocation
+    description: Resolve an end user's IP address to a location and default fiat currency before quoting
+  - name: Prices
+    description: Current token prices denominated in a fiat currency
   - name: Payments
     description: Core payment operations including quotes, confirmation, and status tracking
   - name: Webhooks

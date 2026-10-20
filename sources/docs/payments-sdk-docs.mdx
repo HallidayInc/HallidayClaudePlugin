@@ -183,6 +183,7 @@ The following are configuration options for onramps or cross-chain deposits of a
 | `outputs`             | Asset[]                       | Assets the user receives in the `destinationAddress`.                                      |
 | `funders` (optional)            | [FunderRole](#funderrole)[]   | Funding wallets available to the user at payment time. |
 | `destinationAddress`  | string                        | The address where deposited funds are sent.                                                                        |
+| `tags` (optional)               | string[]                      | Client-defined strings attached to each deposit the widget creates. See [Tags](#tags).                        |
 
 ## Withdrawal
 
@@ -196,6 +197,7 @@ This is used for withdrawing assets from the user's wallet or an in-app smart co
 | `outputs` (optional)            | Asset[]                     | Filter on allowed withdrawal targets.                 |
 | `funder`                        | [FunderRole](#funderrole)   | The wallet funding the withdrawal. Required — `openWithdrawal()` throws if it is not set. |
 | `destinationAddress` (optional) | string                      | The offramp target address. This can be on another chain than the origin address. |
+| `tags` (optional)               | string[]                    | Client-defined strings attached to each withdrawal the widget creates. See [Tags](#tags).                      |
 
 ## FunderRole
 
@@ -231,11 +233,12 @@ All fields are optional. Colors are CSS color strings.
 ```ts
 type Address = string;
 
-type TypedData = string;
+type Hex = `0x${string}`;
 
-interface TransactionRequest {
-  to: string;
-  from?: string;
+type TransactionRequest = {
+  to: Hex;
+  chainId: number;
+  from?: Hex;
   nonce?: number;
   gasLimit?: bigint;
   gasPrice?: bigint;
@@ -243,8 +246,7 @@ interface TransactionRequest {
   maxFeePerGas?: bigint;
   data?: string;
   value?: bigint;
-  chainId: number;
-}
+};
 
 interface TransactionReceipt {
   transactionHash?: string;
@@ -293,7 +295,15 @@ type HeaderTitle = string;
 type Asset = string; // Format: "chain:tokenAddress"
 
 type SignMessage = (input: { message: string; ownerAddress?: Address }) => Promise<string>;
-type SignTypedData = (input: { typedData: TypedData; ownerAddress?: Address }) => Promise<string>;
+
+type SignTypedData = (
+  input: {
+    typedData: TypedData;
+    ownerAddress?: Address;
+    chainId?: number;
+  }
+) => Promise<string>;
+
 type SendTransaction = (
   transaction: TransactionRequest,
   chainConfig: EVMChainConfig,
@@ -307,11 +317,96 @@ type SignAuthMessage = (input: {
   walletType: WalletAuthChain;
 }) => Promise<string>;
 
-interface FunderRole {
+type TransactionReceipt = {
+  transactionHash?: string;
+  blockHash?: string;
+  blockNumber?: number;
+  from?: Hex;
+  to?: Hex;
+  /** Whatever your provider returned, unmodified. */
+  rawReceipt?: unknown;
+};
+
+type EVMChainConfig = {
+  chain_id: bigint;
+  network: string;
+  is_testnet: boolean;
+  address_family: "EVM";
+  native_currency: { name: string; symbol: string; decimals: number };
+  explorer?: string;
+  image?: string;
+  rpc?: string;
+};
+
+type SendTransaction = (
+  transaction: TransactionRequest,
+  chainConfig: EVMChainConfig,
+) => Promise<TransactionReceipt>;
+
+type SolTransactionRequest = {
+  from: string;
+  /** Base64/base58 serialized transaction — sign and submit as-is. */
+  serializedTransaction: string;
+};
+
+type SolTransactionReceipt = {
+  signature: string;
+};
+
+type SolChainConfig = {
+  chain_id: bigint;
+  network: string;
+  is_testnet: boolean;
+  address_family: "SOL";
+  explorer?: string;
+  image?: string;
+};
+
+type SolSendTransaction = (
+  transaction: SolTransactionRequest,
+  chainConfig: SolChainConfig,
+) => Promise<SolTransactionReceipt>;
+
+type EvmFunderRole = {
   getAddress: () => Promise<Address>;
   sendTransaction: SendTransaction;
+  walletType?: "EVM";
   walletName?: string;
+};
+
+type SolFunderRole = {
+  walletType: "SOL";
+  getAddress: () => Promise<Address>;
+  sendTransaction: SolSendTransaction;
+  walletName?: string;
+};
+
+interface ITransferInDepositInfo {
+  deposit_token: Asset;
+  deposit_amount: number;
+  deposit_address: Address;
+  deposit_chain: string;
 }
+
+interface ITransferInInstruction {
+  type: "TRANSFER_IN";
+  payment_id: string;
+  funding_page_url?: string;
+  deposit_info: ITransferInDepositInfo[];
+}
+
+type GetBalances = () => Promise<[Asset, number][]>;
+type SendFunds = (instruction: ITransferInInstruction) => Promise<void>;
+type GetFee = (assetIdentifier: Asset, amount: string) => Promise<string> | string;
+
+type CustomFunderRole = {
+  walletName?: string;
+  getBalances: GetBalances;
+  sendFunds: SendFunds;
+  getFee?: GetFee;
+};
+
+type FunderRole = EvmFunderRole | SolFunderRole | CustomFunderRole;
 
 type Owner =
   | {
@@ -338,6 +433,7 @@ interface DepositConfig {
   outputs?: Asset[];
   funders?: FunderRole[];
   destinationAddress?: Address;
+  tags?: string[];
 }
 
 interface WithdrawalConfig {
@@ -345,6 +441,7 @@ interface WithdrawalConfig {
   outputs?: Asset[];
   funder?: FunderRole;
   destinationAddress?: Address;
+  tags?: string[];
 }
 
 interface HallidayPaymentsConfig {
@@ -919,6 +1016,57 @@ In addition to the following code example, a demonstration of passing a connecte
 Turnkey embedded wallet signatures can be integrated with the Halliday JS SDK using the 
 `@turnkey/react-wallet-kit` and `@turnkey/viem` SDKs with `viem` and `@halliday-sdk/payments`. The developer is required to create an interface for the Turnkey SDK. A full React.js code example is available here: [Halliday JS SDK Turnkey React.js Example](https://github.com/HallidayInc/HallidaySdkTurnkeyReactExample).
 
+### Solana Funder
+
+Connect a Solana wallet as a funder using the [Mysten Wallet Standard](https://www.npmjs.com/package/@mysten/wallet-standard) and Halliday SDK Solana utilities.
+
+```js
+import { getWallets, isWalletWithRequiredFeatureSet } from "@mysten/wallet-standard";
+import { connectSolWallet } from "@halliday-sdk/payments/solana";
+
+const getPhantom = () => {
+  getWallets()
+    .get()
+    .filter((w) => isWalletWithRequiredFeatureSet(w, [
+      "solana:signMessage",
+      "solana:signAndSendTransaction"
+    ]))
+    .find((w) => w.name === "Phantom");
+}
+
+const funder = {
+  ...connectSolWallet(getPhantom()),
+  walletName: "Phantom"
+};
+```
+
+### Custom Funders
+
+Create a custom funder in situations where a funder cannot conventionally send a transaction or have its token balances checked.
+
+```js
+const customFunder = {
+  walletName: "Program Wallet",
+  getBalances: async () => {
+    const data = await asyncFetchTokenBalances(walletAddress);
+    const balances = [];
+    data.balances.forEach((b) => {
+      // Widget selector will display these:
+      // b = {
+      //   tokenId: `chain:0x...`,
+      //   amount: 123.456,
+      // ];
+      balances.push([b.tokenId, b.amount]);
+    });
+    return balances;
+  },
+
+  sendFunds: async (instruction) => {
+    // Use instructions (ITransferInInstruction above) to send funds
+  },
+}
+```
+
 ### Multiple Funders
 
 In the scenario that a developer chooses to show multiple possible funding sources for the user, an array of funder objects can be passed as `deposit.funders` to the `HallidayPayments` constructor (or later via `updateConfig` / `updateWallets`).
@@ -1009,6 +1157,40 @@ Another option is to embed it within a page. In React, render the `<HallidayEmbe
         outputs: ["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"],
       },
     });
+    ```
+  </Tab>
+</Tabs>
+
+### Tags
+
+Available in SDK v4.5.0 or later. Tags are an optional, client-defined array of strings attached to each payment the widget creates. They are returned as `tags` on the [payment status](/pages/api-status#payment-tags) object and as `event.tags` in [webhook](/pages/webhooks) payloads. Every tag must be a non-empty string, and the combined length of all tags must not exceed 400 characters.
+
+<Tabs>
+  <Tab title="React">
+    ```tsx copy
+    import { HallidayPaymentsProvider, HallidayEmbed } from "@halliday-sdk/payments/react";
+
+    <HallidayPaymentsProvider
+      apiKey={ HALLIDAY_PUBLIC_API_KEY }
+      deposit={{ tags: ["tag_here", "other_tag_here"] }}
+      withdrawal={{ tags: ["other_tag_here_too"] }}>
+      <HallidayEmbed />
+    </HallidayPaymentsProvider>
+    ```
+  </Tab>
+  <Tab title="JavaScript">
+    ```tsx copy
+    import HallidayPayments from "@halliday-sdk/payments";
+
+    const halliday = new HallidayPayments({
+      apiKey: HALLIDAY_PUBLIC_API_KEY,
+      deposit: { tags: ["tag_here"] },
+      withdrawal: { tags: ["tag_here"] },
+    });
+
+    // Retag before a later open if needed
+    halliday.updateConfig({ deposit: { tags: ["new_tag"] } });
+    halliday.openDeposit();
     ```
   </Tab>
 </Tabs>

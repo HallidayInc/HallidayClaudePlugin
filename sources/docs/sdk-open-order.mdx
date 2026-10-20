@@ -1,0 +1,32 @@
+---
+title: Open an order by ID with the SDK
+sidebarTitle: Open Order By ID
+public: true
+---
+
+To show a Halliday payment order status screen in the widget, the user can click or tap the icon in the top right of the widget and find the order in the list.
+
+If an order is the most recent, in-progress order, a button is displayed in the main widget screen, which opens the details of that order when clicked.
+
+To directly open an order's details screen in the widget, use the `openOrder` method.
+
+<Tabs>
+  <Tab title="React">
+    ```tsx copy
+    const { openOrder } = useHallidayPayments();
+
+    // ...
+
+    openOrder(id); // ID is always a v4 UUID
+    ```
+  </Tab>
+  <Tab title="JavaScript">
+    ```tsx copy
+    const halliday = new HallidayPayments({ /* ... */});
+
+    // ...
+
+    halliday.openOrder(id); // ID is always a v4 UUID
+    ```
+  </Tab>
+</Tabs>

@@ -14,7 +14,11 @@ Note that the JSON response object returned by `GET /payments` and `POST /paymen
 
 A payment is initiated onchain once the OTW [deposit address](/pages/otw) on the specified network holds a token balance **greater than or equal to** the input amount set in the quote. Sending tokens to this deposit address is referred to as a **deposit**. Any address can perform the deposit to fund the payment.
 
-Once a fiat-to-crypto onramp, centralized exchange withdrawal, or cross-chain swap is confirmed using the `POST /payments/confirm` endpoint, the API returns a payment status object with a status of `PENDING` or `UNCONFIRMED`. If the status is `UNCONFIRMED`, the owner must complete verification before the payment can proceed (see [owner verification](#owner-verification-user_verify) below). Once a payment is pending, it can be funded. Funding must occur before the quote expires. The payment expires if it is not funded before the `initiate_fund_by` datetime detailed in the status object.
+Once a fiat-to-crypto onramp, centralized exchange withdrawal, or cross-chain swap is confirmed using the `POST /payments/confirm` endpoint, the API returns a payment status object with a status of `PENDING` or `UNCONFIRMED`. If the status is `UNCONFIRMED`, the owner must complete verification before the payment can proceed (see [owner verification](#owner-verification-user_verify) below).
+
+Once a payment is pending, it can be funded. A `PENDING` payment should ideally be funded immediately. If it is not funded, it becomes `EXPIRED` roughly 8 to 10 hours after it is created. Onramp payments using slower bank rails have longer windows: wire 1 to 2 days, ACH 2 to 3 days, and SWIFT 3 to 4 days. Ideally, a quote should be funded before the `accept_by` time returned in the quote response. A quote can be funded after `accept_by` and before it becomes `EXPIRED` however it may not properly execute due to onchain price movements since the quote creation.
+
+For onramps, the provider checkout must be started before the `initiate_fund_by` datetime in the status object.
 
 ### Funding an onramp vs funding a swap
 
@@ -121,7 +125,7 @@ The `FAILED` status indicates that a payment has failed to complete due to an on
 
 ### Expired
 
-The `EXPIRED` status indicates that the payment was not funded before the `initiate_fund_by` datetime detailed in the status response object.
+The `EXPIRED` status indicates that the payment was not funded within its funding window, roughly 8 to 10 hours after it is created for most payments. Onramp payments using slower bank rails have longer windows: wire 1 to 2 days, ACH 2 to 3 days, and SWIFT 3 to 4 days.
 
 A payment can be safely abandoned if it becomes `EXPIRED`, before it is funded, in favor of a new quote. If an `EXPIRED` payment is funded, the `owner` wallet address can retry the payment with a new quote or withdraw the assets from the OTW to the `owner` address.
 
@@ -142,6 +146,20 @@ In the scenario that a user accidentally funds a payment with an improper input 
 ### Tainted
 
 The `TAINTED` status indicates that an onchain address associated with a payment request is recognized as a sanctioned address. Tainted payments cannot be completed or retried.
+
+## Payment Tags
+
+Tags are an optional, client-defined array of strings attached to a payment. They are set with the `tags` property in the `POST /payments/quotes` request body and are returned as `tags` on the payment status object and as `event.tags` in [webhook](/pages/webhooks) payloads. Every tag must be a non-empty string, and the combined length of all tags must not exceed 400 characters.
+
+```json
+{
+  "request": { "kind": "FIXED_INPUT", "...": "..." },
+  "price_currency": "USD",
+  "tags": ["string1", "string2"]
+}
+```
+
+Tags can also be set from the Payments SDK widget. See [SDK tags](/pages/payments-sdk-docs#tags).
 
 ## Funding Examples
 
