@@ -4,7 +4,7 @@ The Halliday API enables developers to build fully custom payment interfaces. Us
 
 ## When to Use
 
-- Native mobile apps (Swift/Kotlin) that can't use the widget
+- Native mobile apps (Swift/Kotlin) that don't want to embed the JS SDK widget
 - Highly customized payment UIs that need full design control
 - Backend-to-backend integrations
 - When the developer explicitly wants to build their own UI
@@ -13,11 +13,12 @@ The Halliday API enables developers to build fully custom payment interfaces. Us
 
 The Halliday API uses REST endpoints to quote, confirm, fund, and track payments. The core flow is:
 
-1. Confirm a route exists for the input/output pair (`GET /assets/available-outputs`)
-2. Request quotes (`POST /payments/quotes`) and present them in your custom UI
-3. Confirm the selected quote (`POST /payments/confirm`), handling a `USER_VERIFY` `next_instruction` if returned
-4. Fund the payment — send the user to `next_instruction.funding_page_url` for onramps, or transfer input tokens to the deposit address for swaps
-5. Poll `GET /payments` for status, or receive a webhook
+1. Check the owner for parked funds before quoting (`POST /payments/issues` with `owner_address`). An empty `issues` array means nothing to address. A `parked_fund` issue carries a `withdraw_from` object to pass unchanged to `POST /payments/withdraw`; if `withdraw_from` is `null` the funds cannot be withdrawn yet.
+2. Confirm a route exists for the input/output pair (`GET /assets/available-outputs`)
+3. Request quotes (`POST /payments/quotes`) and present them in your custom UI
+4. Confirm the selected quote (`POST /payments/confirm`), handling a `USER_VERIFY` `next_instruction` if returned
+5. Fund the payment — send the user to `next_instruction.funding_page_url` for onramps, or transfer input tokens to the deposit address for swaps. Fund promptly: unfunded payments become `EXPIRED` roughly 8 to 10 hours after creation (longer on bank rails: wire 1 to 2 days, ACH 2 to 3 days, SWIFT 3 to 4 days). Funding after the quote's `accept_by` time is accepted but may not execute properly due to price movement. For onramps, the provider checkout must start before `initiate_fund_by`.
+6. Poll `GET /payments` for status, or receive a webhook
 
 ## API Specification
 

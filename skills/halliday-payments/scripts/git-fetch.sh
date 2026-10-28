@@ -8,6 +8,9 @@ ALLOWED_REPOS=(
   HallidaySdkPrivyReactExample
   HallidaySdkViemWagmiRainbowkitExample
   HallidaySdkReactNative
+  HallidaySdkTurnkeyReactExample
+  HallidaySDKSwiftSHPK
+  HallidaySDKKotlinSHPK
   HallidayPaymentsApiExamples
   HallidayPaymentsApiExamplesReact
   HallidayApiDynamicExamplesWagmi

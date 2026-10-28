@@ -155,7 +155,7 @@ Used by both top-level "Paste a public API key" and the post-dashboard "Paste pu
 3. Acknowledge briefly: "Got it — I'll use that key for any Halliday API calls this session."
 4. Hold the key in conversational memory for the rest of the session.
 
-**Never write the public API key to disk. Never echo the full key back to the user. Never include it in any file you create.**
+The public API key is not a secret, so it is fine to show it back to the user in chat and to include it in the payment recovery link (`https://app.halliday.xyz/payments/<PAYMENT_ID>?apiKey=<KEY>`) shown during a payment lookup. Only write it to disk or include it in a file when the user asks for that or gives permission.
 
 ---
 
@@ -264,6 +264,16 @@ Ask the user using AskUserQuestion:
 1. **React + Dynamic + Ethers** — React with Dynamic wallet and Ethers.js (Repository: `HallidaySdkDynamicEthers`)
 2. **React + Viem + Wagmi + Rainbowkit** — React with Rainbowkit (Repository: `HallidaySdkViemWagmiRainbowkitExample`)
 3. **React Native + Reown + Expo + Ethers** — React Native with SDK widget in WebView (Repository: `HallidaySdkReactNative`)
+4. **More options**
+
+**If the user picks "More options" again**, ask once more:
+
+**Question:** "Which of these SDK Widget examples would you like to clone?"
+
+**Options:**
+1. **React + Turnkey embedded wallets** — React with Turnkey and Viem (Repository: `HallidaySdkTurnkeyReactExample`)
+2. **Native iOS (Swift)** — JS SDK widget in a Swift app with a self-hosted private key (Repository: `HallidaySDKSwiftSHPK`)
+3. **Native Android (Kotlin)** — JS SDK widget in a Kotlin app with a self-hosted private key (Repository: `HallidaySDKKotlinSHPK`)
 
 **If Custom UI via API**, ask using AskUserQuestion:
 
@@ -385,19 +395,19 @@ If the user selects "Look up a payment" (or if auto-activated with a payment loo
 2. Collect required information via AskUserQuestion:
    - **Payment ID** (required) — the UUID string
    - **Public API key** — check if the developer already provided one during onboarding. If not, ask for it. Be prepared to accept a different public API key than the one used for integration.
-   - **Owner address** — only needed for `/payments/history` lookups
+   - **Owner address** — only needed for `/payments/history` lookups. For a balance check, use `owner_address` from the `GET /payments` response instead of asking.
 
 3. Call the Halliday API using `api-fetch.sh`:
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <API_KEY> GET /payments "payment_id=<PAYMENT_ID>"
    ```
 
-4. **Always present a clear payment summary first** — status, type, amounts, addresses, duration, fees. Follow the summary template in the reference guide.
+4. **Always present a clear payment summary first** — status, type, amounts, addresses, duration, fees. Follow the summary template in the reference guide. **If the balance check (step 5) finds stuck assets, the summary must include the recovery link** `https://app.halliday.xyz/payments/<PAYMENT_ID>?apiKey=<API_KEY>`. The public key belongs in this URL — that is the one place it is shown.
 
 5. **Then provide status-specific details:**
    - **COMPLETE:** Extract transaction hash from `fulfilled.route`, call `GET /chains` to build block explorer link
    - **PENDING/UNCONFIRMED:** Show next instruction details and time remaining
-   - **FAILED or funded EXPIRED:** Call `POST /payments/balances` to check OTW balances, present recovery options (retry vs withdraw) with step-by-step instructions
+   - **FAILED or EXPIRED (funded or not):** Call `POST /payments/balances` with an `OWNER` query (`owner` from the status response, `scope.kind` `PAYMENT`, `tokens` including the payment's input asset) to check deposit address balances. If stuck assets exist, show the recovery link, then the API recovery options (retry vs withdraw) with step-by-step instructions from the reference guide
    - **WITHDRAWN:** Show completion details
    - **TAINTED:** Explain sanctions screening, direct to support
 
@@ -447,7 +457,8 @@ ${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <API_KEY> <M
 |--------|----------|---------|
 | GET | /payments | Get payment status by payment_id |
 | GET | /payments/history | Get payment history by owner_address |
-| POST | /payments/balances | Check OTW wallet balances for a payment |
+| POST | /payments/balances | Check deposit address balances for a payment (`OWNER` query) |
+| POST | /payments/issues | Find parked funds across all of an owner's payments |
 | GET | /chains | Get supported chains with explorer URLs |
 | GET | /assets | Get supported asset details |
 | GET | /assets/available-outputs | Verify input-to-output routes |
@@ -458,8 +469,11 @@ ${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh <API_KEY> <M
 # Get payment status
 ${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh pk_key GET /payments "payment_id=abc123"
 
-# Check OTW balances
-${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh pk_key POST /payments/balances "" '{"payment_id":"abc123"}'
+# Check deposit address balances (owner comes from the GET /payments response; tokens is optional)
+${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh pk_key POST /payments/balances "" '{"query":{"source":"OWNER","owner":"0xowner","scope":{"kind":"PAYMENT","payment_id":"abc123"},"tokens":["base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"]}}'
+
+# Find parked funds for an owner across all their payments
+${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh pk_key POST /payments/issues "" '{"owner_address":"0xowner"}'
 
 # Get chain info for explorer links
 ${CLAUDE_PLUGIN_ROOT}/skills/halliday-payments/scripts/api-fetch.sh pk_key GET /chains

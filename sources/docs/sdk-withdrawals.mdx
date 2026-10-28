@@ -1,10 +1,12 @@
 ---
-title: Withdrawals with the Halliday JS SDK
-sidebarTitle: Withdrawals
+title: Withdrawals & offramps with the Halliday JS SDK
+sidebarTitle: Withdrawals & Offramps
 public: true
 ---
 
 ## Withdrawal Widget
+
+### Crypto withdrawals
 
 For apps that define an account for the user, like an embedded wallet or smart contract wallet, the withdraw widget allows the user to move assets out of their account.
 
@@ -12,7 +14,15 @@ The destination of a withdrawal can be any valid address like the user's EOA or 
 
 The destination also can be a different asset on a different chain from the origin. E.g. withdraw pUSD from a user's prediction market account on Polygon to an EOA on MegaETH as USDC, executed in one user interaction.
 
-In practice, the withdrawal widget (`openWithdrawal`) is opened by a different button in the app user interface than the standard deposit.
+### Fiat offramps
+
+Users can also offramp from crypto to fiat in a bank account with the withdrawal widget.
+
+**Fiat offramp is a premium feature available to Halliday clients. To upgrade your account, click the Book a Sales Call button on the top right of this page or send an email to partnerships@halliday.xyz.**
+
+### Withdraw button
+
+In practice, the withdrawal widget (`openWithdrawal`) is opened by a different button in the app user interface than the standard deposit. See the **withdraw** button in the demo app at https://demo.halliday.xyz/.
 
 For complete example implementations of opening the Halliday SDK withdrawal widget, see the [Payments SDK Example Apps](/pages/payments-sdk-example-apps) page.
 

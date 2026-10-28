@@ -10,6 +10,7 @@ ALLOWED_ENDPOINTS=(
   "GET /payments"
   "GET /payments/history"
   "POST /payments/balances"
+  "POST /payments/issues"
   "GET /chains"
   "GET /assets"
   "GET /assets/available-outputs"
@@ -34,7 +35,8 @@ usage() {
   echo "Examples:"
   echo "  api-fetch.sh pk_key GET /payments 'payment_id=abc123'"
   echo "  api-fetch.sh pk_key GET /payments/history 'owner_address=0x123&limit=10'"
-  echo "  api-fetch.sh pk_key POST /payments/balances '' '{\"payment_id\":\"abc123\"}'"
+  echo "  api-fetch.sh pk_key POST /payments/balances '' '{\"query\":{\"source\":\"OWNER\",\"owner\":\"0x123\",\"scope\":{\"kind\":\"PAYMENT\",\"payment_id\":\"abc123\"}}}'"
+  echo "  api-fetch.sh pk_key POST /payments/issues '' '{\"owner_address\":\"0x123\"}'"
   echo "  api-fetch.sh pk_key GET /chains"
   exit 1
 }

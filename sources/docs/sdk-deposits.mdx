@@ -1,10 +1,24 @@
 ---
-title: Deposits with the Halliday JS SDK
-sidebarTitle: Deposits
+title: Deposits & fiat onramps with the Halliday JS SDK
+sidebarTitle: Deposits & Onramps
 public: true
 ---
 
-The deposit modal is the primary screen of the Halliday SDK widget. Once the SDK is [initialized](/pages/payments-sdk-docs#initialization), the deposit modal can be opened at any time using the `openDeposit` function.
+The deposit modal is the primary screen of the Halliday SDK widget. The deposit widget is used to deposit tokens to a selected destination address defined in client code.
+
+### Crypto deposits
+
+End users can send tokens from an EOA, a centralized exchange account, or other account on a supported chain. The input token is automatically converted to the output token and sent to the destination address on the proper chain.
+
+### Fiat onramps
+
+The deposit widget is also an interface for onramping from fiat to crypto which is delivered to the destination address. Compatible onramp providers are shown to end users based on their geolocation. End users are navigated to a provider's website to complete a fiat onramp checkout form.
+
+An **embedded fiat onramp experience** in which the user does not need to leave the Halliday widget is also available.
+
+**The embedded onramp feature can be implemented by Halliday clients with a premium account. To upgrade your account, click the Book a Sales Call button on the top right of this page or send an email to partnerships@halliday.xyz.**
+
+Once the SDK is [initialized](/pages/payments-sdk-docs#initialization), the deposit modal can be opened at any time using the `openDeposit` function.
 
 The `openDeposit` function is meant to be called inside of a button click event handler. When the user is ready to make a deposit, they will click or tap a button in the app user interface, which will trigger the deposit modal.
 

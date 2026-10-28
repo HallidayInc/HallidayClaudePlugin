@@ -79,6 +79,10 @@ A wallet provider object can be passed to the widget configuration. Refer to the
 | [HallidaySdkDynamicWagmi](https://github.com/HallidayInc/HallidaySdkDynamicWagmi) | React + Dynamic + Wagmi |
 | [HallidaySdkPrivyReactExample](https://github.com/HallidayInc/HallidaySdkPrivyReactExample) | React + Privy + Vite |
 | [HallidaySdkViemWagmiRainbowkitExample](https://github.com/HallidayInc/HallidaySdkViemWagmiRainbowkitExample) | React + Viem + Wagmi + Rainbowkit |
+| [HallidaySdkTurnkeyReactExample](https://github.com/HallidayInc/HallidaySdkTurnkeyReactExample) | React + Turnkey embedded wallets + Viem |
+| [HallidaySdkReactNative](https://github.com/HallidayInc/HallidaySdkReactNative) | React Native + Reown + Expo + Ethers.js (widget in WebView) |
+| [HallidaySDKSwiftSHPK](https://github.com/HallidayInc/HallidaySDKSwiftSHPK) | Native iOS (Swift) + self-hosted private key |
+| [HallidaySDKKotlinSHPK](https://github.com/HallidayInc/HallidaySDKKotlinSHPK) | Native Android (Kotlin) + self-hosted private key |
 
 To fetch an example's README for setup instructions:
 ```

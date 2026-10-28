@@ -12,7 +12,7 @@ Two options: (1) Use the SDK widget — it supports custom styling and covers mo
 Any EVM-compatible wallet: Dynamic, Privy, RainbowKit, MetaMask, WalletConnect, etc. Additional wallet support is added frequently.
 
 **"Can I integrate on mobile?"**
-Yes. React Native apps can use the SDK widget. Native mobile apps (Swift/Kotlin) should use the API approach. Note: payment provider screens (Stripe, Moonpay) require a secure mobile browser — plain WebViews won't work for payment input.
+Yes. React Native apps can use the SDK widget. Native Swift and Kotlin apps can also use the JS SDK widget (see the `HallidaySDKSwiftSHPK` and `HallidaySDKKotlinSHPK` examples) or build a custom UI on the API. Note: payment provider screens (Stripe, Moonpay) require a secure mobile browser — plain WebViews won't work for payment input.
 
 ## API and Data
 

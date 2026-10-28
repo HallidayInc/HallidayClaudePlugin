@@ -24,7 +24,7 @@
 7. **Then, based on status:**
    - COMPLETE: extracts transaction hash, calls `GET /chains` to build block explorer link
    - PENDING: shows time remaining until funding deadline, next instruction details
-   - FAILED or funded EXPIRED: calls `POST /payments/balances` to check OTW balances, suggests recovery options (retry vs withdraw)
+   - FAILED or EXPIRED (funded or not): calls `POST /payments/balances` with an `OWNER` query (owner from the status response, `tokens` including the input asset) to check deposit address balances. If any balance is above zero, the summary includes the recovery link `https://app.halliday.xyz/payments/<payment_id>?apiKey=<key>`, then recovery options (retry vs withdraw)
    - WITHDRAWN: shows completion details
    - TAINTED: explains sanctions flag, directs to support
 8. If recovery is needed, Claude explains both options (retry and withdraw) with specific steps
@@ -37,7 +37,7 @@
 ## Expected API Calls
 
 - `GET /payments?payment_id=pay_abc123` (always)
-- `POST /payments/balances` (only if FAILED or funded EXPIRED)
+- `POST /payments/balances` (only if FAILED or EXPIRED)
 - `GET /chains` (only if COMPLETE, to build explorer link)
 
 ## What Should NOT Happen
@@ -45,8 +45,9 @@
 - Should NOT skip the payment summary and jump straight to diagnosis
 - Should NOT fabricate payment data — all information must come from the API response
 - Should NOT call endpoints not in the api-fetch.sh allowlist
-- Should NOT expose the API key in the output shown to the user
+- Should NOT write the API key to disk or into a file without the user's request or permission (showing it in chat or in the recovery link is fine)
 - Should NOT load `reference/integration-checklist.md` — this is a lookup, not a code review
 - Should NOT WebFetch external documentation
 - Should NOT attempt to execute recovery actions (withdraw, re-quote) — only explain the steps
-- Should NOT call `POST /payments/balances` for COMPLETE or unfunded EXPIRED payments
+- Should NOT call `POST /payments/balances` for COMPLETE, PENDING, or WITHDRAWN payments
+- Should NOT send `{"payment_id": ...}` as the balances body — the API requires the `query` object

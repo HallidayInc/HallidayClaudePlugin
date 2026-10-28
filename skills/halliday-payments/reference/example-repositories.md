@@ -14,6 +14,9 @@ Use these when the developer wants the drop-in widget UI.
 | [HallidaySdkPrivyReactExample](https://github.com/HallidayInc/HallidaySdkPrivyReactExample) | SDK widget + Privy + Vite | React apps with Privy |
 | [HallidaySdkViemWagmiRainbowkitExample](https://github.com/HallidayInc/HallidaySdkViemWagmiRainbowkitExample) | SDK widget + Viem + Wagmi + Rainbowkit | React apps with Rainbowkit |
 | [HallidaySdkReactNative](https://github.com/HallidayInc/HallidaySdkReactNative) | SDK widget in WebView + Reown + Expo + Ethers.js | React Native apps |
+| [HallidaySdkTurnkeyReactExample](https://github.com/HallidayInc/HallidaySdkTurnkeyReactExample) | SDK widget + Turnkey embedded wallets + Viem | React apps with Turnkey |
+| [HallidaySDKSwiftSHPK](https://github.com/HallidayInc/HallidaySDKSwiftSHPK) | JS SDK widget in a native iOS app with a self-hosted private key | Swift / iOS apps |
+| [HallidaySDKKotlinSHPK](https://github.com/HallidayInc/HallidaySDKKotlinSHPK) | JS SDK widget in a native Android app with a self-hosted private key | Kotlin / Android apps |
 
 ## Custom UI via API Examples
 
@@ -37,11 +40,13 @@ Use these when the developer wants full control over the payment interface.
    - No framework → Vanilla examples
    - React → React examples
    - React Native → React Native examples
+   - Native iOS / Android → Swift / Kotlin SHPK examples
 
 3. **What wallet provider?**
    - Dynamic → Dynamic examples
    - Privy → Privy examples
    - Rainbowkit → Rainbowkit example
+   - Turnkey → Turnkey example
    - Other/none → Vanilla or basic React examples
 
 4. **What web3 library?**
